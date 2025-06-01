@@ -1,18 +1,18 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @Binding var isDarkModeEnabled: Bool
+    @Environment(\.travelScheduleIsDarkBinding) var isDarkBinding
     @State private var showUserAgreement: Bool = false
     var body: some View {
         VStack {
             List {
-                Toggle("Темная тема", isOn: $isDarkModeEnabled)
+                Toggle("Темная тема", isOn: isDarkBinding)
                     .tint(.blue)
                     .listRowSeparator(Visibility.hidden)
                 HStack {
                     Text("Пользовательское соглашение")
                     Spacer()
-                    Image(uiImage: .chevron)
+                    Image(uiImage: .Chevron.right)
                         .renderingMode(.template)
                         .foregroundStyle(.primary)
                 }
@@ -28,11 +28,11 @@ struct SettingsView: View {
             Divider()
         }
         .fullScreenCover(isPresented: $showUserAgreement) {
-            UserAgreementView()
+            UserAgreementView(isDark: isDarkBinding.wrappedValue)
         }
     }
 }
 
 #Preview {
-    SettingsView(isDarkModeEnabled: .constant(true))
+    SettingsView()
 }

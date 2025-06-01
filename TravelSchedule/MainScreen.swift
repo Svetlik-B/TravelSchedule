@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct MainScreen: View {
-    @State var isDarkModeEnabled: Bool = false
     var body: some View {
         TabView {
             VStack {
@@ -12,16 +11,12 @@ struct MainScreen: View {
             .tabItem {
                 Image(uiImage: .schedule)
             }
-            SettingsView(isDarkModeEnabled: $isDarkModeEnabled)
+            SettingsView()
                 .tabItem {
                     Image(uiImage: .settings)
                 }
         }
         .tint(.primary)
-        .environment(
-            \.colorScheme,
-            isDarkModeEnabled ? .dark : .light
-        )
     }
 }
 
