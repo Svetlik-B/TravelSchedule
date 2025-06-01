@@ -1,18 +1,27 @@
 import SwiftUI
 
 struct MainScreen: View {
+    @State var isDarkModeEnabled: Bool = false
     var body: some View {
         TabView {
-            Text("Откуда")
-                .tabItem {
-                    Image(uiImage: .schedule)
-                }
-            Text("Настройки")
+            VStack {
+                Text("Расписание")
+                Spacer()
+                Divider()
+            }
+            .tabItem {
+                Image(uiImage: .schedule)
+            }
+            SettingsView(isDarkModeEnabled: $isDarkModeEnabled)
                 .tabItem {
                     Image(uiImage: .settings)
                 }
         }
-        .tint(.black)
+        .tint(.primary)
+        .environment(
+            \.colorScheme,
+            isDarkModeEnabled ? .dark : .light
+        )
     }
 }
 
