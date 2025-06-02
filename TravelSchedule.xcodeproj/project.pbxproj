@@ -109,11 +109,11 @@
 				};
 			};
 			buildConfigurationList = 40FCF5E32DE8E604001FF060 /* Build configuration list for PBXProject "TravelSchedule" */;
-			developmentRegion = en;
+			developmentRegion = ru;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				en,
 				Base,
+				ru,
 			);
 			mainGroup = 40FCF5DF2DE8E604001FF060;
 			minimizedProjectReferenceProxies = 1;
