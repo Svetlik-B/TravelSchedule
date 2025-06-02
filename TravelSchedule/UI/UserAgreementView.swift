@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct UserAgreementView: View {
-    var isDark: Bool = false
     @Environment(\.dismiss) private var dismiss
     var body: some View {
         ScrollView{
@@ -24,14 +23,15 @@ struct UserAgreementView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .background(isDark ? Color.black : Color.white)
-        .environment(\.colorScheme, isDark ? .dark : .light)
+        .background(Color(uiColor: .systemBackground))
     }
 }
 
 #Preview("Dark") {
-    UserAgreementView(isDark: false)
+    UserAgreementView()
+        .environment(\.colorScheme, .dark)
 }
 #Preview("Light") {
-    UserAgreementView(isDark: true)
+    UserAgreementView()
+        .environment(\.colorScheme, .light)
 }

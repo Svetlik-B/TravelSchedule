@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.travelScheduleIsDarkBinding) var isDarkBinding
     @State private var showUserAgreement: Bool = false
+    @Environment(\.colorScheme) var colorScheme
     var body: some View {
         VStack {
             List {
@@ -27,7 +28,8 @@ struct SettingsView: View {
             }.font(.system(size: 12))
         }
         .fullScreenCover(isPresented: $showUserAgreement) {
-            UserAgreementView(isDark: isDarkBinding.wrappedValue)
+            UserAgreementView()
+                .environment(\.colorScheme, colorScheme)
         }
     }
 }

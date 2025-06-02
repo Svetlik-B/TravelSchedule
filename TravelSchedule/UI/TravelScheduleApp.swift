@@ -3,15 +3,10 @@ import SwiftUI
 
 @main
 struct TravelScheduleApp: App {
-    @State private var isDark = true
     var body: some Scene {
         WindowGroup {
             MainScreen()
-                .environment(\.travelScheduleIsDarkBinding, $isDark)
-                .environment(\.colorScheme, isDark ? .dark : .light)
         }
-        .environment(\.colorScheme, isDark ? .dark : .light)
-        .onChange(of: isDark) { print("Color scheme changed to: \($0 ? "Dark" : "Light")")}
     }
 }
 
