@@ -25,7 +25,6 @@ struct SettingsView: View {
                 Text("Приложение использует API «Яндекс.Расписания»")
                 Text("Версия 1.0 (beta)")
             }.font(.system(size: 12))
-            Divider()
         }
         .fullScreenCover(isPresented: $showUserAgreement) {
             UserAgreementView(isDark: isDarkBinding.wrappedValue)
