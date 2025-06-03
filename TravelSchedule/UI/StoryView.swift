@@ -30,3 +30,7 @@ struct StoryView: View {
         .scrollIndicators(.hidden)
     }
 }
+
+#Preview {
+    StoryView()
+}

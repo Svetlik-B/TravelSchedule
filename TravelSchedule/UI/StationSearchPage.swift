@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct StationSearchView: View {
+struct StationSearchPage: View {
     struct ViewModel {
         var city: City
         var list: [Station]
@@ -45,7 +45,7 @@ struct StationSearchView: View {
 }
 #Preview {
     NavigationStack {
-        StationSearchView(
+        StationSearchPage(
             viewModel: .init(
                 city: .init(id: "1", name: "Москва"),
                 list: [

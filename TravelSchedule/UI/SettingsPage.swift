@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct SettingsView: View {
+struct SettingsPage: View {
     @Environment(\.travelScheduleIsDarkBinding) var isDarkBinding
     @State private var showUserAgreement: Bool = false
     @Environment(\.colorScheme) var colorScheme
@@ -35,5 +35,5 @@ struct SettingsView: View {
 }
 
 #Preview {
-    SettingsView()
+    SettingsPage()
 }

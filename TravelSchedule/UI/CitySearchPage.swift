@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct CitySearchView: View {
+struct CitySearchPage: View {
     var viewModel: StationSearchViewModel
     @State var searchText = ""
     private var filteredCities: [City] {
@@ -32,14 +32,14 @@ struct CitySearchView: View {
 
 #Preview {
     NavigationStack {
-        CitySearchView(viewModel: .mock { print("cityId: \($0), stationId: \($1)") })
+        CitySearchPage(viewModel: .mock { print("cityId: \($0), stationId: \($1)") })
             .navigationTitle("Выбор города")
             .navigationBarTitleDisplayMode(.inline)
     }
 }
 #Preview("not found") {
     NavigationStack {
-        CitySearchView(
+        CitySearchPage(
             viewModel: .mock {
                 print("cityId: \($0), stationId: \($1)")
             },
@@ -84,10 +84,10 @@ struct CityListView: View {
 }
 
 struct StationSearchDestinationView: View {
-    var viewModel: StationSearchView.ViewModel
+    var viewModel: StationSearchPage.ViewModel
     @Environment(\.dismiss) var dismiss
     var body: some View {
-        StationSearchView(viewModel: viewModel)
+        StationSearchPage(viewModel: viewModel)
             .standardNavigationBar(
                 title: "Выбор станции",
                 action: { dismiss() }

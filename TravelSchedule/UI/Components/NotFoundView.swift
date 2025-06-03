@@ -13,3 +13,7 @@ struct NotFoundView: View {
         }
     }
 }
+
+#Preview {
+    NotFoundView(text: "Not Found")
+}
