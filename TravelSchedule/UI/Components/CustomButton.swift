@@ -1,6 +1,9 @@
 import SwiftUI
 
 struct CustomButton: View {
+    enum Constant {
+        static var height: CGFloat = 60
+    }
     var text: String
     var hasDot: Bool = false
     var action: () -> Void
@@ -18,7 +21,7 @@ struct CustomButton: View {
                 }
                 .foregroundStyle(.white)
             }
-            .frame(height: 60)
+            .frame(height: CustomButton.Constant.height)
             .clipShape(RoundedRectangle(cornerRadius: 16))
         }
     }

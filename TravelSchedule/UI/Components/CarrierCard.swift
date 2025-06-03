@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct CarrierCard: View {
-    struct ViewModel {
+    struct ViewModel: Identifiable {
+        var id: String
         var logo: UIImage?
         var name: String
         var comment: String?
@@ -51,53 +52,62 @@ struct CarrierCard: View {
     }
 }
 
+extension CarrierCard.ViewModel {
+    static let rzd = Self(
+        id: "",
+        logo: .rzd,
+        name: "РЖД",
+        comment: "С пересадкой в Костроме",
+        date: "14 января",
+        departure: "22:30",
+        duration: "20 часов",
+        arrival: "08:15",
+    )
+    static let fgk = Self(
+        id: "",
+        logo: .fgk,
+        name: "ФГК",
+        comment: nil,
+        date: "15 января",
+        departure: "01:15",
+        duration: "9 часов",
+        arrival: "09:00",
+    )
+    static let ural = Self(
+        id: "",
+        logo: .ural,
+        name: "Урал логистика",
+        comment: nil,
+        date: "16 января",
+        departure: "12:30",
+        duration: "9 часов",
+        arrival: "21:00",
+    )
+    func with(id: String) -> Self {
+        var copy = self
+        copy.id = id
+        return copy
+    }
+    var noLogo: Self {
+        var copy = self
+        copy.logo = nil
+        return copy
+    }
+    var noComment: Self {
+        var copy = self
+        copy.comment = nil
+        return copy
+    }
+}
+
 #Preview {
     ScrollView {
         VStack(spacing: 8) {
-            CarrierCard(
-                viewModel: .init(
-                    logo: .rzd,
-                    name: "РЖД",
-                    comment: "С пересадкой в Костроме",
-                    date: "14 января",
-                    departure: "22:30",
-                    duration: "20 часов",
-                    arrival: "08:15",
-                )
-            )
-            CarrierCard(
-                viewModel: .init(
-                    logo: .fgk,
-                    name: "ФГК",
-                    comment: nil,
-                    date: "15 января",
-                    departure: "01:15",
-                    duration: "9 часов",
-                    arrival: "09:00",
-                )
-            )
-            CarrierCard(
-                viewModel: .init(
-                    logo: .ural,
-                    name: "Урал логистика",
-                    comment: nil,
-                    date: "16 января",
-                    departure: "12:30",
-                    duration: "9 часов",
-                    arrival: "21:00",
-                )
-            )
-            CarrierCard(
-                viewModel: .init(
-                    logo: nil,
-                    name: "no logo",
-                    comment: nil,
-                    date: "16 января",
-                    departure: "12:30",
-                    duration: "9 часов",
-                    arrival: "21:00",
-                )
-            )
+            CarrierCard(viewModel: .rzd)
+            CarrierCard(viewModel: .fgk)
+            CarrierCard(viewModel: .ural)
+            CarrierCard(viewModel: .ural.noLogo)
+            CarrierCard(viewModel: .rzd.noComment)
         }
     }
     .padding()
