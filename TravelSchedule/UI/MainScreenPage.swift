@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct MainScreenPage: View {
-    @State private var showCitySelector: Bool = false
+    @State private var showFromCitySelector: Bool = false
+    @State private var showToCitySelector: Bool = false
     @State private var from: String?
     @State private var to: String?
     @Environment(\.colorScheme) var colorScheme
@@ -10,9 +11,12 @@ struct MainScreenPage: View {
         TabView {
             VStack {
                 StationSelectionPage(
-                    from: $from,
-                    to: $to,
-                    showCitySelector: $showCitySelector
+                    viewModel: .init(
+                        from: $from,
+                        to: $to,
+                        showFromCitySelector: $showFromCitySelector,
+                        showToCitySelector: $showToCitySelector
+                    )
                 )
                 Spacer()
                 Divider()
@@ -30,16 +34,42 @@ struct MainScreenPage: View {
             }
         }
         .tint(.primary)
-        .fullScreenCover(isPresented: $showCitySelector) {
+        .fullScreenCover(isPresented: $showFromCitySelector) {
             CitySelectionModal(
-                from: $from,
-                to: $to,
-                showCitySelector: $showCitySelector
+                direction: $from,
+                showCitySelector: $showFromCitySelector
+            )
+            .environment(\.colorScheme, isDark ? .dark : .light)
+        }
+        .fullScreenCover(isPresented: $showToCitySelector) {
+            CitySelectionModal(
+                direction: $to,
+                showCitySelector: $showToCitySelector
             )
             .environment(\.colorScheme, isDark ? .dark : .light)
         }
         .environment(\.travelScheduleIsDarkBinding, $isDark)
         .environment(\.colorScheme, isDark ? .dark : .light)
+    }
+}
+
+struct CitySelectionModal: View {
+    @Binding var direction: String?
+    @Binding var showCitySelector: Bool
+    var body: some View {
+        NavigationStack {
+            CitySearchPage(
+                viewModel: .mock(
+                    onStationSelected: { city, station in
+                        direction = "\(city.name) (\(station.name))"
+                        showCitySelector = false
+                    }
+                )
+            )
+            .standardNavigationBar(title: "Выбор города") {
+                showCitySelector = false
+            }
+        }
     }
 }
 
