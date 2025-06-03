@@ -25,7 +25,7 @@ struct SettingsPage: View {
             VStack(spacing: 16) {
                 Text("Приложение использует API «Яндекс.Расписания»")
                 Text("Версия 1.0 (beta)")
-            }.font(.system(size: 12))
+            }.r12
         }
         .fullScreenCover(isPresented: $showUserAgreement) {
             UserAgreementView()

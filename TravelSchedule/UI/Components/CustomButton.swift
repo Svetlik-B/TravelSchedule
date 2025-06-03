@@ -9,14 +9,13 @@ struct CustomButton: View {
             ZStack {
                 Color.Colors.blueUniversal
                 HStack(spacing: 4) {
-                    Text(text)
+                    Text(text).b17
                     if hasDot {
                         Circle()
                             .fill(Color.Colors.redUniversal)
                             .frame(width: 8, height: 8)
                     }
                 }
-                .font(.system(size: 17, weight: .bold))
                 .foregroundStyle(.white)
             }
             .frame(height: 60)
@@ -27,5 +26,5 @@ struct CustomButton: View {
 
 #Preview {
     CustomButton(text: "Test", hasDot: true, action: {})
-        .padding()
+        .padding(16)
 }
