@@ -49,6 +49,15 @@ struct CarrierCard: View {
         .padding(.horizontal, 14)
         .background(Color.Colors.lightGray)
         .clipShape(RoundedRectangle(cornerRadius: 24))
+        .listRowSeparator(.hidden)
+        .listRowInsets(
+            .init(
+                top: 0,
+                leading: 16,
+                bottom: 0,
+                trailing: 16
+            )
+        )
     }
 }
 

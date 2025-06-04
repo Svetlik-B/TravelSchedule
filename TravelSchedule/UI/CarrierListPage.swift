@@ -19,20 +19,10 @@ struct CarrierListPage: View {
                 List {
                     ForEach(viewModel.carriers) { carrier in
                         CarrierCard(viewModel: carrier)
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(
-                                .init(
-                                    top: 0,
-                                    leading: 16,
-                                    bottom: 0,
-                                    trailing: 16
-                                )
-                            )
+                            .listRowBackground(Color.clear)
                             .background {
-                                NavigationLink {
-                                    Text(carrier.name)
-                                } label: {
-
+                                NavigationLink("") {
+                                    CarrierInfoPageWrapper()
                                 }
                             }
                     }
@@ -50,13 +40,45 @@ struct CarrierListPage: View {
             .padding()
         }
         .fullScreenCover(isPresented: $filterIsShown) {
-            NavigationStack {
-                Text("TODO")
-                    .standardNavigationBar(title: "") {
-                        filterIsShown = false
-                    }
-            }
+            CarrierFilterPageWrapper()
         }
+    }
+}
+
+struct CarrierFilterPageWrapper: View {
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        let viewModel: CarrierFilterPage.ViewModel = {
+            let viewModel = CarrierFilterPage.ViewModel()
+            viewModel.proceed = { dismiss() }
+            return viewModel
+        }()
+        NavigationStack {
+            CarrierFilterPage(viewModel: viewModel)
+                .customNavigationBar(title: "") {
+                    dismiss()
+                }
+        }
+    }
+}
+
+struct CarrierInfoPageWrapper: View {
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        let viewModel: CarrierInfoPage.ViewModel = {
+            let viewModel = CarrierInfoPage.ViewModel.init(
+                logo: nil,
+                name: "ОАО «РЖД»",
+                email: "I.Lozgkina@yandex.ru",
+                phone: "+7 (904) 329-27-71"
+            )
+            return viewModel
+        }()
+        CarrierInfoPage(viewModel: viewModel)
+            .customNavigationBar(
+                title: "Информация о перевозчике",
+                action: { dismiss() }
+            )
     }
 }
 

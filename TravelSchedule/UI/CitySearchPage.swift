@@ -88,7 +88,7 @@ struct StationSearchDestinationView: View {
     @Environment(\.dismiss) var dismiss
     var body: some View {
         StationSearchPage(viewModel: viewModel)
-            .standardNavigationBar(
+            .customNavigationBar(
                 title: "Выбор станции",
                 action: { dismiss() }
             )

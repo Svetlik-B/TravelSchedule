@@ -65,3 +65,14 @@ struct DirectionButton: View {
         }
     }
 }
+
+#Preview {
+    let viewModel = StationSelectionPage.ViewModel(
+        from: .constant("From"),
+        to: .constant("To"),
+        showFromCitySelector: .constant(false),
+        showToCitySelector: .constant(false)
+    )
+    
+    StationSelectionPage(viewModel:viewModel)
+}

@@ -66,7 +66,7 @@ struct CitySelectionModal: View {
                     }
                 )
             )
-            .standardNavigationBar(title: "Выбор города") {
+            .customNavigationBar(title: "Выбор города") {
                 showCitySelector = false
             }
         }

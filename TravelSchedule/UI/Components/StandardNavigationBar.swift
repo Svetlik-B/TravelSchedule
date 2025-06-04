@@ -1,7 +1,7 @@
 import SwiftUI
 
 extension View {
-    func standardNavigationBar(
+    func customNavigationBar(
         title: String,
         action: @escaping () -> Void
     ) -> some View {
