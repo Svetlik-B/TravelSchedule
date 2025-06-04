@@ -27,11 +27,6 @@ struct UserAgreementView: View {
     }
 }
 
-#Preview("Dark") {
+#Preview {
     UserAgreementView()
-        .environment(\.colorScheme, .dark)
-}
-#Preview("Light") {
-    UserAgreementView()
-        .environment(\.colorScheme, .light)
 }

@@ -60,19 +60,7 @@ struct CarrierListPage: View {
     }
 }
 
-
-
-#Preview("Вариантов нет") {
-    CarrierListPage(
-        viewModel: .init(
-            text: "Москва (Ярославский вокзал)" + " → Санкт Петербург (Балтийский вокзал)",
-            carriers: [],
-            hasFilter: true
-        )
-    )
-}
-
-#Preview("Вариантов нет") {
+#Preview {
     NavigationStack {
         CarrierListPage(
             viewModel: .init(
@@ -100,4 +88,14 @@ func makeIds(carriers: [CarrierCard.ViewModel]) -> [CarrierCard.ViewModel] {
     carriers.enumerated().map { index, carrier in
         carrier.with(id: "\(index)")
     }
+}
+
+#Preview("Вариантов нет") {
+    CarrierListPage(
+        viewModel: .init(
+            text: "Москва (Ярославский вокзал)" + " → Санкт Петербург (Балтийский вокзал)",
+            carriers: [],
+            hasFilter: true
+        )
+    )
 }
