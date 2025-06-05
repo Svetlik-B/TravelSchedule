@@ -1,15 +1,5 @@
 import SwiftUI
 
-struct StationSelectionPage: View {
-    var body: some View {
-        VStack(spacing: 20) {
-            StoryView()
-            StationSelector()
-            Spacer()
-        }
-    }
-}
-
 struct StationSelector: View {
     @State private var showFromCitySelector: Bool = false
     @State private var showToCitySelector: Bool = false
@@ -45,7 +35,7 @@ struct StationSelector: View {
                 CustomButton(text: "Найти", hasDot: false) {
                     showCarriers = true
                 }
-                    .frame(width: 150)
+                .frame(width: 150)
             }
         }
         .fullScreenCover(isPresented: $showCarriers) {
@@ -67,42 +57,62 @@ struct StationSelector: View {
             .environment(\.colorScheme, colorScheme)
         }
     }
-}
-
-struct CarrierListWrapper: View {
-    var from: String
-    var to: String
-    @Environment(\.dismiss) private var dismiss
-    var body: some View {
-        NavigationStack {
-            CarrierListPage(
-                viewModel: .init(
-                    text: "\(from) -> \(to)",
-                    carriers: mockCarriers,
-                    hasFilter: true
+    
+    struct CitySelectionModal: View {
+        @Binding var direction: String?
+        @Binding var showCitySelector: Bool
+        var body: some View {
+            NavigationStack {
+                CitySearchPage(
+                    viewModel: .mock(
+                        onStationSelected: { city, station in
+                            direction = "\(city.name) (\(station.name))"
+                            showCitySelector = false
+                        }
+                    )
                 )
-            )
-            .customNavigationBar(title: "") { dismiss() }
+                .customNavigationBar(title: "Выбор города") {
+                    showCitySelector = false
+                }
+            }
         }
     }
-}
 
-struct DirectionButton: View {
-    var text: String?
-    var prompt: String
-    var action: () -> Void
-    var body: some View {
-        Button(action: action) {
-            HStack {
-                Text(text ?? prompt)
-                    .foregroundStyle(text == nil ? Color(uiColor: .lightGray) : .black)
-                    .lineLimit(1)
-                Spacer()
+    struct CarrierListWrapper: View {
+        var from: String
+        var to: String
+        @Environment(\.dismiss) private var dismiss
+        var body: some View {
+            NavigationStack {
+                CarrierListPage(
+                    viewModel: .init(
+                        text: "\(from) -> \(to)",
+                        carriers: mockCarriers,
+                        hasFilter: true
+                    )
+                )
+                .customNavigationBar(title: "") { dismiss() }
+            }
+        }
+    }
+
+    struct DirectionButton: View {
+        var text: String?
+        var prompt: String
+        var action: () -> Void
+        var body: some View {
+            Button(action: action) {
+                HStack {
+                    Text(text ?? prompt)
+                        .foregroundStyle(text == nil ? Color(uiColor: .lightGray) : .black)
+                        .lineLimit(1)
+                    Spacer()
+                }
             }
         }
     }
 }
 
 #Preview {
-    StationSelectionPage()
+    StationSelector()
 }

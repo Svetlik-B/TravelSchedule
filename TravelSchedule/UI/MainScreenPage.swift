@@ -28,26 +28,6 @@ struct MainScreenPage: View {
     }
 }
 
-struct CitySelectionModal: View {
-    @Binding var direction: String?
-    @Binding var showCitySelector: Bool
-    var body: some View {
-        NavigationStack {
-            CitySearchPage(
-                viewModel: .mock(
-                    onStationSelected: { city, station in
-                        direction = "\(city.name) (\(station.name))"
-                        showCitySelector = false
-                    }
-                )
-            )
-            .customNavigationBar(title: "Выбор города") {
-                showCitySelector = false
-            }
-        }
-    }
-}
-
 #Preview {
     MainScreenPage()
 }
