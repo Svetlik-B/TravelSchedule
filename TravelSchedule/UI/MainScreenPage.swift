@@ -1,23 +1,12 @@
 import SwiftUI
 
 struct MainScreenPage: View {
-    @State private var showFromCitySelector: Bool = false
-    @State private var showToCitySelector: Bool = false
-    @State private var from: String?
-    @State private var to: String?
     @Environment(\.colorScheme) var colorScheme
     @State private var isDark = true
     var body: some View {
         TabView {
             VStack {
-                StationSelectionPage(
-                    viewModel: .init(
-                        from: $from,
-                        to: $to,
-                        showFromCitySelector: $showFromCitySelector,
-                        showToCitySelector: $showToCitySelector
-                    )
-                )
+                StationSelectionPage()
                 Spacer()
                 Divider()
             }
@@ -34,20 +23,6 @@ struct MainScreenPage: View {
             }
         }
         .tint(.primary)
-        .fullScreenCover(isPresented: $showFromCitySelector) {
-            CitySelectionModal(
-                direction: $from,
-                showCitySelector: $showFromCitySelector
-            )
-            .environment(\.colorScheme, isDark ? .dark : .light)
-        }
-        .fullScreenCover(isPresented: $showToCitySelector) {
-            CitySelectionModal(
-                direction: $to,
-                showCitySelector: $showToCitySelector
-            )
-            .environment(\.colorScheme, isDark ? .dark : .light)
-        }
         .environment(\.travelScheduleIsDarkBinding, $isDark)
         .environment(\.colorScheme, isDark ? .dark : .light)
     }

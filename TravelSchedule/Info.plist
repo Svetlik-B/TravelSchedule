@@ -5,7 +5,9 @@
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIImageName</key>
-		<string>Splash Screen</string>
+		<string>Server Error</string>
+		<key>UIColorName</key>
+		<string>Splash Color</string>
 	</dict>
 </dict>
 </plist>

@@ -1,35 +1,34 @@
 import SwiftUI
 
 struct StationSelectionPage: View {
-    struct ViewModel {
-        @Binding var from: String?
-        @Binding var to: String?
-        @Binding var showFromCitySelector: Bool
-        @Binding var showToCitySelector: Bool
-    }
-    var viewModel: ViewModel
     var body: some View {
         VStack(spacing: 20) {
             StoryView()
-            StationSelector(viewModel: viewModel)
+            StationSelector()
+            Spacer()
         }
     }
 }
 
 struct StationSelector: View {
-    var viewModel: StationSelectionPage.ViewModel
+    @State private var showFromCitySelector: Bool = false
+    @State private var showToCitySelector: Bool = false
+    @State private var showCarriers: Bool = false
+    @State private var from: String?
+    @State private var to: String?
+    @Environment(\.colorScheme) private var colorScheme
     var body: some View {
         VStack(spacing: 16) {
             HStack(spacing: 18) {
                 VStack(spacing: 26) {
-                    DirectionButton(text: viewModel.from, prompt: "Откуда") { viewModel.showFromCitySelector = true }
-                    DirectionButton(text: viewModel.to, prompt: "Куда") { viewModel.showToCitySelector = true }
+                    DirectionButton(text: from, prompt: "Откуда") { showFromCitySelector = true }
+                    DirectionButton(text: to, prompt: "Куда") { showToCitySelector = true }
                 }
                 .padding()
                 .background(Color.white)
                 .cornerRadius(16)
                 Button {
-                    (viewModel.from, viewModel.to) = (viewModel.to, viewModel.from)
+                    (from, to) = (to, from)
                 } label: {
                     Image(uiImage: .сhange)
                         .padding(5)
@@ -42,10 +41,48 @@ struct StationSelector: View {
             .cornerRadius(16)
             .padding(.horizontal)
 
-            if viewModel.from != nil && viewModel.to != nil {
-                CustomButton(text: "Найти", hasDot: false) {}
+            if from != nil && to != nil {
+                CustomButton(text: "Найти", hasDot: false) {
+                    showCarriers = true
+                }
                     .frame(width: 150)
             }
+        }
+        .fullScreenCover(isPresented: $showCarriers) {
+            CarrierListWrapper(from: from ?? "", to: to ?? "")
+                .environment(\.colorScheme, colorScheme)
+        }
+        .fullScreenCover(isPresented: $showFromCitySelector) {
+            CitySelectionModal(
+                direction: $from,
+                showCitySelector: $showFromCitySelector
+            )
+            .environment(\.colorScheme, colorScheme)
+        }
+        .fullScreenCover(isPresented: $showToCitySelector) {
+            CitySelectionModal(
+                direction: $to,
+                showCitySelector: $showToCitySelector
+            )
+            .environment(\.colorScheme, colorScheme)
+        }
+    }
+}
+
+struct CarrierListWrapper: View {
+    var from: String
+    var to: String
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        NavigationStack {
+            CarrierListPage(
+                viewModel: .init(
+                    text: "\(from) -> \(to)",
+                    carriers: mockCarriers,
+                    hasFilter: true
+                )
+            )
+            .customNavigationBar(title: "") { dismiss() }
         }
     }
 }
@@ -67,12 +104,5 @@ struct DirectionButton: View {
 }
 
 #Preview {
-    let viewModel = StationSelectionPage.ViewModel(
-        from: .constant("From"),
-        to: .constant("To"),
-        showFromCitySelector: .constant(false),
-        showToCitySelector: .constant(false)
-    )
-    
-    StationSelectionPage(viewModel:viewModel)
+    StationSelectionPage()
 }

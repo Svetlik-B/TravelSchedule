@@ -46,6 +46,7 @@ struct CarrierCard: View {
             }
             .frame(height: 48)
         }
+        .foregroundStyle(.black)
         .padding(.horizontal, 14)
         .background(Color.Colors.lightGray)
         .clipShape(RoundedRectangle(cornerRadius: 24))

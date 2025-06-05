@@ -8,6 +8,7 @@ struct CarrierListPage: View {
     }
     var viewModel: ViewModel
     @State private var filterIsShown: Bool = false
+    @Environment(\.colorScheme) private var colorScheme
     var body: some View {
         VStack {
             Text(viewModel.text).b24
@@ -41,6 +42,7 @@ struct CarrierListPage: View {
         }
         .fullScreenCover(isPresented: $filterIsShown) {
             CarrierFilterPageWrapper()
+                .environment(\.colorScheme, colorScheme)
         }
     }
 }
@@ -89,21 +91,25 @@ struct CarrierInfoPageWrapper: View {
                 text: """
                     Москва (Ярославский вокзал) → Санкт Петербург (Балтийский вокзал) 
                     """,
-                carriers: makeIds(carriers: [
-                    .rzd,
-                    .fgk,
-                    .ural,
-                    .rzd,
-                    .fgk,
-                    .ural,
-                    .rzd,
-                    .fgk,
-                    .ural,
-                ]),
+                carriers: mockCarriers,
                 hasFilter: false
             )
         )
     }
+}
+
+var mockCarriers: [CarrierCard.ViewModel] {
+    makeIds(carriers: [
+        .rzd,
+        .fgk,
+        .ural,
+        .rzd,
+        .fgk,
+        .ural,
+        .rzd,
+        .fgk,
+        .ural,
+    ])
 }
 
 func makeIds(carriers: [CarrierCard.ViewModel]) -> [CarrierCard.ViewModel] {

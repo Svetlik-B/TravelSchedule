@@ -95,6 +95,8 @@ struct Line: View {
             Text(text)
             Spacer()
             Image(uiImage: value ? yesImage : noImage)
+                .renderingMode(.template)
+                .tint(.primary)
         }
         .frame(height: 60)
         .background(Color(uiColor: .systemBackground))
