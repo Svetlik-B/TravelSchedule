@@ -1,7 +1,24 @@
 import OpenAPIURLSession
 import SwiftUI
 
+struct Settlement: Codable {
+    var id: String
+    var name: String
+    var railStations: [RailStation]
+}
+
+struct RailStation: Codable {
+    var id: String
+    var name: String
+}
+
 struct ContentView: View {
+    @AppStorage("AllSettlements") private var cityData = Data()
+    var allSettlements: [Settlement] {
+        let settlements = try? JSONDecoder()
+            .decode([Settlement].self, from: cityData)
+        return settlements ?? []
+    }
     var body: some View {
         VStack {
             Image(systemName: "globe")
@@ -11,14 +28,30 @@ struct ContentView: View {
         .padding()
         .task {
             do {
-                try await checkSearchService()
+//                try await checkSearchService()
 //                try await checkScheduleService()
 //                try await checkThreadServiceService()
 //                try await checkNearestStationsService()
 //                try await checkNearestSettlementService()
 //                try await checkCarrierInformationService()
-//                try await checkAllStationsService()
 //                try await checkCopyrightService()
+                var settlements = allSettlements
+                if settlements.isEmpty {
+                    settlements = try await checkAllStationsService()
+                    cityData = try JSONEncoder().encode(settlements)
+                }
+                print("Всего городов:", settlements.count)
+                let stations = settlements
+                    .flatMap(\.railStations)
+                print("Всего станций:", stations.count)
+                print("Первые 100:")
+                print(
+                    stations
+                        .map(\.name)
+                        .sorted()
+                        .prefix(100)
+                        .joined(separator: "\n")
+                )
             } catch {
                 print(error)
             }
@@ -133,7 +166,7 @@ func checkCarrierInformationService() async throws {
     print(response)
 }
 
-func checkAllStationsService() async throws {
+func checkAllStationsService() async throws -> [Settlement] {
     print("\nAllStationsService...")
     let service = AllStationsService(
         client: Client(
@@ -144,7 +177,40 @@ func checkAllStationsService() async throws {
     )
     let response = try await service.getAllStations()
     print("AllStationsService response:")
-    print(response.countries?.count as Any)
+    print(response.countries.count as Any)
+    
+    var settlements = [Settlement]()
+    
+    for country in response.countries {
+        if country.title != "Россия" {
+            continue
+        }
+        for region in country.regions {
+            for settlement in region.settlements {
+                if let id = settlement.codes?.yandex_code {
+                    var newSettlement = Settlement(
+                        id: id,
+                        name: settlement.title ?? "Unknown",
+                        railStations: []
+                    )
+                    for station in settlement.stations {
+                        if let id = station.codes?.yandex_code,
+                           station.station_type == "train_station" {
+                            let newStation = RailStation(
+                                id: id,
+                                name: station.title ?? "Unknown"
+                            )
+                            newSettlement.railStations.append(newStation)
+                        }
+                    }
+                    if !newSettlement.railStations.isEmpty {
+                        settlements.append(newSettlement)
+                    }
+                }
+            }
+        }
+    }
+    return settlements
 }
 
 func checkCopyrightService() async throws {

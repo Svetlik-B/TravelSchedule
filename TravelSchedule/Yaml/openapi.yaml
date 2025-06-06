@@ -264,6 +264,7 @@ paths:
           in: query
           description: Ключ доступа к API.
           required: true
+          example: 65364b60-01c8-4836-9d57-47eff3a54212
           schema:
             type: string
       responses:
@@ -406,6 +407,8 @@ components:
     Codes: 
       type: object
       properties:
+        yandex_code:
+          type: string
         icao: 
           type: string
         sirena:
@@ -535,6 +538,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Country"
+      required:
+        - countries
     Country:
       type: object
       properties:
@@ -544,6 +549,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Region"
+      required:
+        - regions
     Region:
       type: object
       properties:
@@ -553,20 +560,28 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Settlement"
+      required:
+        - settlements
     Settlement:
       type: object
       properties:
+        codes:
+          $ref: "#/components/schemas/Codes"
         title:
-          type: string
+           type: string
         stations:
           type: array
           items:
             $ref: "#/components/schemas/Station"
+      required:
+        - stations
     Station:
       type: object
       properties:
         title:
           type: string
+        codes:
+          $ref: "#/components/schemas/Codes"
         station_type:
           type: string
         direction:
