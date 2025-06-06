@@ -15,6 +15,7 @@ struct RailStation: Codable {
 struct ContentView: View {
     @AppStorage("AllSettlements") private var cityData = Data()
     var allSettlements: [Settlement] {
+        print("Размер данных:", cityData.count)
         let settlements = try? JSONDecoder()
             .decode([Settlement].self, from: cityData)
         return settlements ?? []
@@ -49,7 +50,7 @@ struct ContentView: View {
                     stations
                         .map(\.name)
                         .sorted()
-                        .prefix(100)
+                        .prefix(10)
                         .joined(separator: "\n")
                 )
             } catch {
