@@ -24,25 +24,17 @@ struct StationSearchPage: View {
             if filteredItems.isEmpty {
                 NotFoundView(text: "Станция не найдена")
             } else {
-                List(filteredItems) { station in
-                    HStack {
-                        Text(station.name)
-                        Spacer()
-                        Image(uiImage: .Chevron.right)
-                    }
-                    .padding(.horizontal)
-                    .listRowSeparator(.hidden)
-                    .frame(height: 60)
-                    .listRowInsets(EdgeInsets())
-                    .onTapGesture {
-                        action(station)
-                    }
+                let items = filteredItems
+                    .map { ItemList.Item(id: $0.id, name: $0.name) }
+                ItemList(items: items) { item in
+                    let station = Station(id: item.id, name: item.name)
+                    action(station)
                 }
-                .listStyle(.plain)
             }
         }
     }
 }
+
 #Preview {
     NavigationStack {
         StationSearchPage(

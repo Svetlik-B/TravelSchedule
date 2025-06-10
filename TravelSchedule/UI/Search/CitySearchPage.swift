@@ -12,7 +12,7 @@ struct CitySearchPage: View {
             }
         }
     }
-
+    @State private var stationViewModel: StationSearchPage.ViewModel?
     var body: some View {
         VStack {
             Spacer(minLength: 0)
@@ -21,40 +21,17 @@ struct CitySearchPage: View {
             if filteredCities.isEmpty {
                 NotFoundView(text: "Город не найден")
             } else {
-                CityListView(
-                    filteredCities: filteredCities,
-                    viewModel: viewModel
-                )
+                let items = filteredCities
+                    .map { ItemList.Item(id: $0.id, name: $0.name) }
+                ItemList(items: items) { item in
+                    let city = City(id: item.id, name: item.name)
+                    stationViewModel = .init(
+                        city: city,
+                        list: viewModel.stationList(city)
+                    )
+                }
             }
         }
-    }
-}
-
-struct CityListView: View {
-    var filteredCities: [City]
-    var viewModel: StationSearchViewModel
-    @State private var stationViewModel: StationSearchPage.ViewModel?
-
-    var body: some View {
-        List(filteredCities) { city in
-            HStack {
-                Text(city.name)
-                Spacer()
-                Image(uiImage: .Chevron.right)
-                    .renderingMode(.template)
-            }
-            .padding(.horizontal)
-            .listRowSeparator(.hidden)
-            .frame(height: 60)
-            .listRowInsets(EdgeInsets())
-            .onTapGesture {
-                stationViewModel = .init(
-                    city: city,
-                    list: viewModel.stationList(city)
-                )
-            }
-        }
-        .listStyle(.plain)
         .navigationDestination(item: $stationViewModel) { stationVM in
             StationSearchPage(viewModel: stationVM) { station in
                 viewModel.onStationSelected(stationVM.city, station)
