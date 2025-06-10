@@ -1,3 +1,5 @@
+import Observation
+
 struct City: Identifiable, Equatable, Hashable {
     var id: String
     var name: String
@@ -6,15 +8,41 @@ struct Station: Identifiable, Equatable, Hashable {
     var id: String
     var name: String
 }
-struct StationSearchViewModel {
+
+@Observable
+final class StationSearchViewModel {
     var shortList: [City]
     var fullList: [City]
-    var stationList: (City) -> [Station]
+    var searchText = ""
+    
     var onStationSelected: (City, Station) -> Void
+    var stationList: (City) -> [Station]
+    var filteredCities: [City] {
+        if searchText.isEmpty {
+            return shortList
+        } else {
+            return fullList.filter { item in
+                item.name.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+    }
+    
+    init(
+        shortList: [City],
+        fullList: [City],
+        stationList: @escaping (City) -> [Station],
+        onStationSelected: @escaping (City, Station) -> Void
+    ) {
+        self.shortList = shortList
+        self.fullList = fullList
+        self.stationList = stationList
+        self.onStationSelected = onStationSelected
+    }
 }
 
 extension StationSearchViewModel {
-    static func mock(onStationSelected: @escaping (City, Station) -> Void) -> StationSearchViewModel {
+    static func mock(onStationSelected: @escaping (City, Station) -> Void) -> StationSearchViewModel
+    {
         .init(
             shortList: [
                 .init(id: "1", name: "Москва"),

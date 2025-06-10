@@ -1,27 +1,17 @@
 import SwiftUI
 
 struct CitySearchPage: View {
-    var viewModel: StationSearchViewModel
-    @State var searchText = ""
-    private var filteredCities: [City] {
-        if searchText.isEmpty {
-            return viewModel.shortList
-        } else {
-            return viewModel.fullList.filter { item in
-                item.name.localizedCaseInsensitiveContains(searchText)
-            }
-        }
-    }
+    @Bindable var viewModel: StationSearchViewModel
     @State private var stationViewModel: StationSearchPage.ViewModel?
     var body: some View {
         VStack {
             Spacer(minLength: 0)
-            SearchField(searchText: $searchText)
+            SearchField(searchText: $viewModel.searchText)
 
-            if filteredCities.isEmpty {
+            if viewModel.filteredCities.isEmpty {
                 NotFoundView(text: "Город не найден")
             } else {
-                let items = filteredCities
+                let items = viewModel.filteredCities
                     .map { ItemList.Item(id: $0.id, name: $0.name) }
                 ItemList(items: items) { item in
                     let city = City(id: item.id, name: item.name)
@@ -49,17 +39,5 @@ struct CitySearchPage: View {
         CitySearchPage(viewModel: .mock { print("cityId: \($0), stationId: \($1)") })
             .navigationTitle("Выбор города")
             .navigationBarTitleDisplayMode(.inline)
-    }
-}
-#Preview("not found") {
-    NavigationStack {
-        CitySearchPage(
-            viewModel: .mock {
-                print("cityId: \($0), stationId: \($1)")
-            },
-            searchText: "aaa"
-        )
-        .navigationTitle("Выбор города")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
