@@ -1,12 +1,12 @@
 import SwiftUI
 
 struct StationSearchPage: View {
-    struct ViewModel {
+    struct ViewModel: Equatable, Hashable {
         var city: City
         var list: [Station]
-        var onStationSelected: (_ city: City, _ station: Station) -> Void
     }
     var viewModel: ViewModel
+    var action: (Station) -> Void
     @State private var searchText = ""
     private var filteredItems: [Station] {
         guard !searchText.isEmpty else {
@@ -24,9 +24,9 @@ struct StationSearchPage: View {
             if filteredItems.isEmpty {
                 NotFoundView(text: "Станция не найдена")
             } else {
-                List(filteredItems) { item in
+                List(filteredItems) { station in
                     HStack {
-                        Text(item.name)
+                        Text(station.name)
                         Spacer()
                         Image(uiImage: .Chevron.right)
                     }
@@ -35,7 +35,7 @@ struct StationSearchPage: View {
                     .frame(height: 60)
                     .listRowInsets(EdgeInsets())
                     .onTapGesture {
-                        viewModel.onStationSelected(viewModel.city, item)
+                        action(station)
                     }
                 }
                 .listStyle(.plain)
@@ -55,10 +55,9 @@ struct StationSearchPage: View {
                     .init(id: "4", name: "Белорусский вокзал"),
                     .init(id: "5", name: "Савёловский вокзал"),
                     .init(id: "6", name: "Ленинградский вокзал"),
-                ],
-                onStationSelected: { print("city: \($0.name), station: \($1.name)") }
+                ]
             )
-        )
+        ) { print("station: \($0.name)") }
         .navigationTitle("Выбор станции")
         .navigationBarTitleDisplayMode(.inline)
     }

@@ -1,8 +1,8 @@
-struct City: Identifiable {
+struct City: Identifiable, Equatable, Hashable {
     var id: String
     var name: String
 }
-struct Station: Identifiable {
+struct Station: Identifiable, Equatable, Hashable {
     var id: String
     var name: String
 }

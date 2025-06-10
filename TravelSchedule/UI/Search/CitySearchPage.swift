@@ -30,6 +30,43 @@ struct CitySearchPage: View {
     }
 }
 
+struct CityListView: View {
+    var filteredCities: [City]
+    var viewModel: StationSearchViewModel
+    @State private var stationViewModel: StationSearchPage.ViewModel?
+
+    var body: some View {
+        List(filteredCities) { city in
+            HStack {
+                Text(city.name)
+                Spacer()
+                Image(uiImage: .Chevron.right)
+                    .renderingMode(.template)
+            }
+            .padding(.horizontal)
+            .listRowSeparator(.hidden)
+            .frame(height: 60)
+            .listRowInsets(EdgeInsets())
+            .onTapGesture {
+                stationViewModel = .init(
+                    city: city,
+                    list: viewModel.stationList(city)
+                )
+            }
+        }
+        .listStyle(.plain)
+        .navigationDestination(item: $stationViewModel) { stationVM in
+            StationSearchPage(viewModel: stationVM) { station in
+                viewModel.onStationSelected(stationVM.city, station)
+            }
+            .customNavigationBar(
+                title: "Выбор станции",
+                action: { stationViewModel = nil }
+            )
+        }
+    }
+}
+
 #Preview {
     NavigationStack {
         CitySearchPage(viewModel: .mock { print("cityId: \($0), stationId: \($1)") })
@@ -47,50 +84,5 @@ struct CitySearchPage: View {
         )
         .navigationTitle("Выбор города")
         .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-struct CityListView: View {
-    var filteredCities: [City]
-    var viewModel: StationSearchViewModel
-    var body: some View {
-        List(filteredCities) { city in
-            ZStack {
-                NavigationLink {
-                    StationSearchDestinationView(
-                        viewModel: .init(
-                            city: city,
-                            list: viewModel.stationList(city),
-                            onStationSelected: viewModel.onStationSelected
-                        )
-                    )
-                } label: {
-                    EmptyView()
-                }
-                .opacity(0)
-                HStack {
-                    Text(city.name)
-                    Spacer()
-                    Image(uiImage: .Chevron.right)
-                }
-            }
-            .padding(.horizontal)
-            .listRowSeparator(.hidden)
-            .frame(height: 60)
-            .listRowInsets(EdgeInsets())
-        }
-        .listStyle(.plain)
-    }
-}
-
-struct StationSearchDestinationView: View {
-    var viewModel: StationSearchPage.ViewModel
-    @Environment(\.dismiss) var dismiss
-    var body: some View {
-        StationSearchPage(viewModel: viewModel)
-            .customNavigationBar(
-                title: "Выбор станции",
-                action: { dismiss() }
-            )
     }
 }
