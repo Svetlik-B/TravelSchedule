@@ -1,43 +1,58 @@
 import SwiftUI
 
 struct CitySearchPage: View {
-    @Bindable var viewModel: StationSearchViewModel
-    @State private var stationViewModel: StationSearchPage.ViewModel?
+    @Bindable var viewModel: CitySearchViewModel
+    var cityLoader = CityLoader.live
+    @State private var selectedCity: City?
+    @State private var isWaiting: Bool = false
     var body: some View {
         VStack {
             Spacer(minLength: 0)
             SearchField(searchText: $viewModel.searchText)
 
-            if viewModel.filteredCities.isEmpty {
+            if isWaiting {
+                Color.clear.overlay {
+                    ProgressView()
+                }
+            } else if viewModel.filteredCities.isEmpty {
                 NotFoundView(text: "Город не найден")
             } else {
                 let items = viewModel.filteredCities
                     .map { ItemList.Item(id: $0.id, name: $0.name) }
                 ItemList(items: items) { item in
-                    let city = City(id: item.id, name: item.name)
-                    stationViewModel = .init(
-                        city: city,
-                        list: viewModel.stationList(city)
-                    )
+                    selectedCity = viewModel.city(id: item.id)
                 }
             }
         }
-        .navigationDestination(item: $stationViewModel) { stationVM in
-            StationSearchPage(viewModel: stationVM) { station in
-                viewModel.onStationSelected(stationVM.city, station)
+        .navigationDestination(item: $selectedCity) { city in
+            StationSearchPage(city: city) { station in
+                viewModel.onStationSelected(city, station)
             }
             .customNavigationBar(
                 title: "Выбор станции",
-                action: { stationViewModel = nil }
+                action: { selectedCity = nil }
             )
+        }
+        .task {
+            isWaiting = true
+            do {
+                let cities = try await cityLoader.loadCities()
+                viewModel.setFullList(cities: cities)
+                isWaiting = false
+            } catch {
+                print("Error loading cities: \(error)")
+            }
         }
     }
 }
 
 #Preview {
     NavigationStack {
-        CitySearchPage(viewModel: .mock { print("cityId: \($0), stationId: \($1)") })
-            .navigationTitle("Выбор города")
-            .navigationBarTitleDisplayMode(.inline)
+        CitySearchPage(
+            viewModel: .init { print("cityId: \($0), stationId: \($1)") },
+            cityLoader: .mock
+        )
+        .navigationTitle("Выбор города")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

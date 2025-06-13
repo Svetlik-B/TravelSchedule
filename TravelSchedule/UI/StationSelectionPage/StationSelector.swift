@@ -64,7 +64,7 @@ struct StationSelector: View {
         var body: some View {
             NavigationStack {
                 CitySearchPage(
-                    viewModel: .mock(
+                    viewModel: .init(
                         onStationSelected: { city, station in
                             direction = "\(city.name) (\(station.name))"
                             showCitySelector = false

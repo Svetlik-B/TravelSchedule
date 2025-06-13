@@ -1,23 +1,12 @@
 import OpenAPIURLSession
 import SwiftUI
 
-struct Settlement: Codable {
-    var id: String
-    var name: String
-    var railStations: [RailStation]
-}
-
-struct RailStation: Codable {
-    var id: String
-    var name: String
-}
-
 struct ContentView: View {
     @AppStorage("AllSettlements") private var cityData = Data()
-    var allSettlements: [Settlement] {
+    var allSettlements: [City] {
         print("Размер данных:", cityData.count)
         let settlements = try? JSONDecoder()
-            .decode([Settlement].self, from: cityData)
+            .decode([City].self, from: cityData)
         return settlements ?? []
     }
     var body: some View {
@@ -43,7 +32,7 @@ struct ContentView: View {
                 }
                 print("Всего городов:", settlements.count)
                 let stations = settlements
-                    .flatMap(\.railStations)
+                    .flatMap(\.stations)
                 print("Всего станций:", stations.count)
                 print("Первые 100:")
                 print(
@@ -167,7 +156,7 @@ func checkCarrierInformationService() async throws {
     print(response)
 }
 
-func checkAllStationsService() async throws -> [Settlement] {
+func checkAllStationsService() async throws -> [City] {
     print("\nAllStationsService...")
     let service = AllStationsService(
         client: Client(
@@ -180,7 +169,7 @@ func checkAllStationsService() async throws -> [Settlement] {
     print("AllStationsService response:")
     print(response.countries.count as Any)
     
-    var settlements = [Settlement]()
+    var cities = [City]()
     
     for country in response.countries {
         if country.title != "Россия" {
@@ -189,29 +178,29 @@ func checkAllStationsService() async throws -> [Settlement] {
         for region in country.regions {
             for settlement in region.settlements {
                 if let id = settlement.codes?.yandex_code {
-                    var newSettlement = Settlement(
+                    var newCity = City(
                         id: id,
                         name: settlement.title ?? "Unknown",
-                        railStations: []
+                        stations: []
                     )
                     for station in settlement.stations {
                         if let id = station.codes?.yandex_code,
                            station.station_type == "train_station" {
-                            let newStation = RailStation(
+                            let newStation = Station(
                                 id: id,
                                 name: station.title ?? "Unknown"
                             )
-                            newSettlement.railStations.append(newStation)
+                            newCity.stations.append(newStation)
                         }
                     }
-                    if !newSettlement.railStations.isEmpty {
-                        settlements.append(newSettlement)
+                    if !newCity.stations.isEmpty {
+                        cities.append(newCity)
                     }
                 }
             }
         }
     }
-    return settlements
+    return cities
 }
 
 func checkCopyrightService() async throws {

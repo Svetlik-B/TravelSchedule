@@ -1,18 +1,14 @@
 import SwiftUI
 
 struct StationSearchPage: View {
-    struct ViewModel: Equatable, Hashable {
-        var city: City
-        var list: [Station]
-    }
-    var viewModel: ViewModel
+    var city: City
     var action: (Station) -> Void
     @State private var searchText = ""
     private var filteredItems: [Station] {
         guard !searchText.isEmpty else {
-            return viewModel.list
+            return city.stations
         }
-        return viewModel.list.filter { item in
+        return city.stations.filter { item in
             item.name.localizedCaseInsensitiveContains(searchText)
         }
     }
@@ -38,9 +34,10 @@ struct StationSearchPage: View {
 #Preview {
     NavigationStack {
         StationSearchPage(
-            viewModel: .init(
-                city: .init(id: "1", name: "Москва"),
-                list: [
+            city: .init(
+                id: "1",
+                name: "Москва",
+                stations: [
                     .init(id: "1", name: "Киевский вокзал"),
                     .init(id: "2", name: "Курский вокзал"),
                     .init(id: "3", name: "Ярославский вокзал"),
