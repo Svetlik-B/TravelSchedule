@@ -28,8 +28,14 @@ struct SettingsPage: View {
             }.r12
         }
         .fullScreenCover(isPresented: $showUserAgreement) {
-            UserAgreementView()
-                .environment(\.colorScheme, colorScheme)
+            NavigationStack {
+                UserAgreementView()
+                    .customNavigationBar(
+                        title: "Пользовательское соглашение",
+                        action: { showUserAgreement = false }
+                    )
+            }
+            .environment(\.colorScheme, colorScheme)
         }
     }
 }
