@@ -66,7 +66,7 @@ struct StationSelector: View {
                 CitySearchPage(
                     viewModel: .init(
                         onStationSelected: { city, station in
-                            direction = "\(city.name) (\(station.name))"
+                            direction = "\(station.name)"
                             showCitySelector = false
                         }
                     )
