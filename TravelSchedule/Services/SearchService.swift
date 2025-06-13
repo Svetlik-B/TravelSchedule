@@ -3,7 +3,7 @@ typealias Search = Components.Schemas.SearchResponse
 protocol SearchProtocol {
     func getSearch(
         from: String,
-        to: String?,
+        to: String,
         offset: Int?,
         limit: Int?
 
@@ -21,7 +21,7 @@ final class SearchService: SearchProtocol {
 
     func getSearch(
         from: String,
-        to: String?,
+        to: String,
         offset: Int?,
         limit: Int?
     ) async throws -> Search {

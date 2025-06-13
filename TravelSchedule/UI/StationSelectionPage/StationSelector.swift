@@ -3,16 +3,16 @@ import SwiftUI
 struct StationSelector: View {
     @State private var showFromCitySelector: Bool = false
     @State private var showToCitySelector: Bool = false
-    @State private var showCarriers: Bool = false
-    @State private var from: String?
-    @State private var to: String?
+    @State private var carriersViewModel: CarrierListPage.ViewModel?
+    @State private var from: Station?
+    @State private var to: Station?
     @Environment(\.colorScheme) private var colorScheme
     var body: some View {
         VStack(spacing: 16) {
             HStack(spacing: 18) {
                 VStack(spacing: 26) {
-                    DirectionButton(text: from, prompt: "Откуда") { showFromCitySelector = true }
-                    DirectionButton(text: to, prompt: "Куда") { showToCitySelector = true }
+                    DirectionButton(text: from?.name, prompt: "Откуда") { showFromCitySelector = true }
+                    DirectionButton(text: to?.name, prompt: "Куда") { showToCitySelector = true }
                 }
                 .padding()
                 .background(Color.white)
@@ -31,16 +31,21 @@ struct StationSelector: View {
             .cornerRadius(16)
             .padding(.horizontal)
 
-            if from != nil && to != nil {
+            if let from, let to {
                 CustomButton(text: "Найти", hasDot: false) {
-                    showCarriers = true
+                    carriersViewModel = .init(
+                        from: from,
+                        to: to,
+                    )
                 }
                 .frame(width: 150)
             }
         }
-        .fullScreenCover(isPresented: $showCarriers) {
-            CarrierListWrapper(from: from ?? "", to: to ?? "")
-                .environment(\.colorScheme, colorScheme)
+        .fullScreenCover(item: $carriersViewModel) { viewModel in
+            NavigationStack {
+                CarrierListPage( viewModel: viewModel)
+                .customNavigationBar(title: "") { carriersViewModel = nil }
+            }
         }
         .fullScreenCover(isPresented: $showFromCitySelector) {
             CitySelectionModal(
@@ -59,14 +64,14 @@ struct StationSelector: View {
     }
     
     struct CitySelectionModal: View {
-        @Binding var direction: String?
+        @Binding var direction: Station?
         @Binding var showCitySelector: Bool
         var body: some View {
             NavigationStack {
                 CitySearchPage(
                     viewModel: .init(
                         onStationSelected: { city, station in
-                            direction = "\(station.name)"
+                            direction = station
                             showCitySelector = false
                         }
                     )
@@ -74,24 +79,6 @@ struct StationSelector: View {
                 .customNavigationBar(title: "Выбор города") {
                     showCitySelector = false
                 }
-            }
-        }
-    }
-
-    struct CarrierListWrapper: View {
-        var from: String
-        var to: String
-        @Environment(\.dismiss) private var dismiss
-        var body: some View {
-            NavigationStack {
-                CarrierListPage(
-                    viewModel: .init(
-                        text: "\(from) -> \(to)",
-                        carriers: mockCarriers,
-                        hasFilter: true
-                    )
-                )
-                .customNavigationBar(title: "") { dismiss() }
             }
         }
     }

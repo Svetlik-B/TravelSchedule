@@ -58,7 +58,8 @@ private extension Components.Schemas.Region {
 private extension Components.Schemas.Settlement {
     var trainStations: [Station] {
         stations
-            .filter { $0.station_type == "train_station"}
+            .filter { $0.transport_type == "train"}
+//            .filter { $0.station_type == "train_station"}
             .map {($0.codes?.yandex_code, $0.title) }
             .compactMap { (code, title) -> Station? in
                 guard let code, let title
