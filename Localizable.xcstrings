@@ -1,0 +1,82 @@
+{
+  "sourceLanguage" : "ru",
+  "strings" : {
+    "" : {
+
+    },
+    "%lld часов" : {
+      "localizations" : {
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld часа"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld часов"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld час"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%lld часов"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Bold/17" : {
+
+    },
+    "Bold/24" : {
+
+    },
+    "Bold/34" : {
+
+    },
+    "Regular/12" : {
+
+    },
+    "Regular/17" : {
+
+    },
+    "Regular/20" : {
+
+    },
+    "Введите запрос" : {
+
+    },
+    "Версия 1.0 (beta)" : {
+
+    },
+    "Время отправления" : {
+
+    },
+    "Показывать варианты с пересадками" : {
+
+    },
+    "Пользовательское соглашение" : {
+
+    },
+    "Приложение использует API «Яндекс.Расписания»" : {
+
+    },
+    "Темная тема" : {
+
+    }
+  },
+  "version" : "1.0"
+}

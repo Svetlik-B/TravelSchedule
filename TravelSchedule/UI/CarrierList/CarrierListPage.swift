@@ -25,16 +25,12 @@ struct CarrierListPage: View {
                 offset: nil,
                 limit: nil
             )
-            print(result)
             
             // TODO: logo
-            // TODO: date format
-            // TODO: согласовать "часы"
             // TODO: mock
             // TODO: filter
             // TODO: more then 100
-            
-            
+                        
             let segments = result.segments ?? []
             carriers = segments.compactMap { segment in
                 var duration = Int(segment.duration ?? 0)
@@ -46,13 +42,25 @@ struct CarrierListPage: View {
                     let stations = transfers.compactMap(\.title).joined(separator: ", ")
                     comment = "С пересадкой (\(stations))"
                 }
+                var dateString = "No Date"
+                if
+                    let departureDate = segment.departure,
+                    let date = ISO8601DateFormatter().date(from: departureDate)
+                {
+                    let dateFormatter = DateFormatter()
+                    dateFormatter.dateFormat = "d MMMM"
+                    dateString = dateFormatter.string(from: date)
+                }
+                let id = [segment.departure, segment.arrival]
+                    .compactMap { $0 }
+                    .joined(separator: " -> ")
                 return CarrierCard.ViewModel(
-                    id: String(departure) + String(arrival),
+                    id: id,
                     name: segment.thread?.carrier?.title ?? "No Title",
                     comment: comment,
-                    date: segment.start_date ?? "no start",
+                    date: dateString,
                     departure: String(departure),
-                    duration: "\(duration) часов",
+                    duration: duration,
                     arrival: String(arrival)
                 )
             }

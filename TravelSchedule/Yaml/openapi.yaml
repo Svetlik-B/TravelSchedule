@@ -15,6 +15,7 @@ paths:
           in: query
           description: Ключ доступа к API
           required: true
+          example: 65364b60-01c8-4836-9d57-47eff3a54212
           schema:
             type: string
         - name: from
@@ -23,14 +24,14 @@ paths:
           required: true
           schema:
             type: string
-          example: s9612140
+          example: s2006004
         - name: to
           in: query
           description: Код станции прибытия.
           required: true
           schema:
             type: string
-          example: s2000003
+          example: s9602494
         - name: date
           in: query
           description: Дата, на которую необходимо получить список рейсов.
@@ -633,8 +634,6 @@ components:
         departure: 
           type: string
         arrival: 
-          type: string
-        start_date:
           type: string
         transfers:
           type: array

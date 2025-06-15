@@ -8,7 +8,7 @@ struct CarrierCard: View {
         var comment: String?
         var date: String
         var departure: String
-        var duration: String
+        var duration: Int
         var arrival: String
     }
     var viewModel: ViewModel
@@ -38,7 +38,7 @@ struct CarrierCard: View {
                 Rectangle()
                     .frame(height: 1)
                     .foregroundColor(.gray)
-                Text(viewModel.duration).r12
+                Text("\(viewModel.duration) часов").r12
                 Rectangle()
                     .frame(height: 1)
                     .foregroundColor(.gray)
@@ -70,7 +70,7 @@ extension CarrierCard.ViewModel {
         comment: "С пересадкой в Костроме",
         date: "14 января",
         departure: "22:30",
-        duration: "20 часов",
+        duration: 1,
         arrival: "08:15",
     )
     static let fgk = Self(
@@ -80,7 +80,7 @@ extension CarrierCard.ViewModel {
         comment: nil,
         date: "15 января",
         departure: "01:15",
-        duration: "9 часов",
+        duration: 22,
         arrival: "09:00",
     )
     static let ural = Self(
@@ -90,7 +90,7 @@ extension CarrierCard.ViewModel {
         comment: nil,
         date: "16 января",
         departure: "12:30",
-        duration: "9 часов",
+        duration: 5,
         arrival: "21:00",
     )
     func with(id: String) -> Self {
