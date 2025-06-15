@@ -61,6 +61,7 @@ func checkSearchService() async throws {
     let response = try await service.getSearch(
         from: "c146",
         to: "c213",
+        date: Date(),
         offset: 0,
         limit: 1
     )

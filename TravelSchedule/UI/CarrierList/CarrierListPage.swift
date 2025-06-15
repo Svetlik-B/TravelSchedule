@@ -20,13 +20,13 @@ struct CarrierListPage: View {
             let result = try await service.getSearch(
                 from: from.id,
                 to: to.id,
+                date: Date(),
                 offset: nil,
                 limit: nil
             )
             print(result)
             
             // TODO: logo
-            // TODO: date of travel
             // TODO: date format
             // TODO: согласовать "часы"
             // TODO: mock
@@ -38,8 +38,8 @@ struct CarrierListPage: View {
             carriers = segments.compactMap { segment in
                 var duration = Int(segment.duration ?? 0)
                 duration /= 60 * 60
-                let departure = (segment.departure ?? "???").prefix(5)
-                let arrival = (segment.arrival ?? "???").prefix(5)
+                let departure = (segment.departure ?? "???").prefix(11 + 5).suffix(5)
+                let arrival = (segment.arrival ?? "???").prefix(11 + 5).suffix(5)
                 return CarrierCard.ViewModel(
                     id: segment.thread?.uid ?? "No id",
                     name: segment.thread?.carrier?.title ?? "No Title",

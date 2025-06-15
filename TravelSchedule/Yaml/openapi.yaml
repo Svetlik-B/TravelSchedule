@@ -31,6 +31,13 @@ paths:
           schema:
             type: string
           example: s2000003
+        - name: date
+          in: query
+          description: Дата, на которую необходимо получить список рейсов.
+          required: false
+          schema: 
+            type: string
+          example: 2025-06-15
         - name: offset
           in: query
           description: Смещение относительно первого результата поиска.
