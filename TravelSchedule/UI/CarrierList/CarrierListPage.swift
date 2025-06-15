@@ -1,10 +1,10 @@
-import SwiftUI
 import OpenAPIURLSession
+import SwiftUI
 
 struct CarrierListPage: View {
     @Observable
     final class ViewModel: Identifiable {
-        var id: String { from.id + "-" + to.id}
+        var id: String { from.id + "-" + to.id }
         var from: Station
         var to: Station
         var carriers = [CarrierCard.ViewModel]()
@@ -25,16 +25,19 @@ struct CarrierListPage: View {
                 offset: nil,
                 limit: nil
             )
-            
+
             // TODO: logo
             // TODO: mock
             // TODO: filter
             // TODO: more then 100
-                        
+
             let segments = result.segments ?? []
             carriers = segments.compactMap { segment in
-                var duration = Int(segment.duration ?? 0)
+                var duration =
+                    segment.duration ?? segment.details?.compactMap(\.duration).reduce(0, +) ?? 0
+
                 duration /= 60 * 60
+
                 let departure = (segment.departure ?? "???").prefix(11 + 5).suffix(5)
                 let arrival = (segment.arrival ?? "???").prefix(11 + 5).suffix(5)
                 var comment: String?
@@ -43,8 +46,7 @@ struct CarrierListPage: View {
                     comment = "С пересадкой (\(stations))"
                 }
                 var dateString = "No Date"
-                if
-                    let departureDate = segment.departure,
+                if let departureDate = segment.departure,
                     let date = ISO8601DateFormatter().date(from: departureDate)
                 {
                     let dateFormatter = DateFormatter()
@@ -54,9 +56,15 @@ struct CarrierListPage: View {
                 let id = [segment.departure, segment.arrival]
                     .compactMap { $0 }
                     .joined(separator: " -> ")
+
+                let name =
+                    segment.thread?.carrier?.title ?? segment.details?.compactMap(
+                        \.thread?.carrier?.title
+                    ).first ?? "No Name 22"
+
                 return CarrierCard.ViewModel(
                     id: id,
-                    name: segment.thread?.carrier?.title ?? "No Title",
+                    name: name,
                     comment: comment,
                     date: dateString,
                     departure: String(departure),
@@ -64,13 +72,13 @@ struct CarrierListPage: View {
                     arrival: String(arrival)
                 )
             }
-            
+
         }
 
-        var text : String {
+        var text: String {
             "\(from.name) -> \(to.name)"
         }
-        
+
         init(
             from: Station,
             to: Station
@@ -112,7 +120,7 @@ struct CarrierListPage: View {
                         text: "Уточнить время",
                         hasDot: viewModel.hasFilter
                     ) { filterIsShown = true }
-                        .padding()
+                    .padding()
                 }
             }
         }

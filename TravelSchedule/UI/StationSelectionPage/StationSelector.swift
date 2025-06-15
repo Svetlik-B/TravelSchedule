@@ -46,6 +46,7 @@ struct StationSelector: View {
                 CarrierListPage( viewModel: viewModel)
                 .customNavigationBar(title: "") { carriersViewModel = nil }
             }
+            .environment(\.colorScheme, colorScheme)
         }
         .fullScreenCover(isPresented: $showFromCitySelector) {
             CitySelectionModal(

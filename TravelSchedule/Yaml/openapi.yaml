@@ -630,11 +630,17 @@ components:
       type: object
       properties:
         duration:
-          type: number
+          type: integer
         departure: 
           type: string
         arrival: 
           type: string
+        has_transfers:
+          type: boolean
+        details:
+          type: array
+          items:
+            $ref: "#/components/schemas/Detail"
         transfers:
           type: array
           items:
@@ -653,3 +659,11 @@ components:
       properties:
         title:
           type: string
+    Detail: 
+      type: object
+      properties:
+        duration:
+          type: integer
+        thread: 
+          $ref: "#/components/schemas/Thread"
+        
