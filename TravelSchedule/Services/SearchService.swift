@@ -7,6 +7,7 @@ protocol SearchProtocol {
         from: String,
         to: String,
         date: Date,
+        transfers: Bool,
         offset: Int?,
         limit: Int?
 
@@ -26,6 +27,7 @@ final class SearchService: SearchProtocol {
         from: String,
         to: String,
         date: Date,
+        transfers: Bool,
         offset: Int?,
         limit: Int?
     ) async throws -> Search {
@@ -36,6 +38,7 @@ final class SearchService: SearchProtocol {
                 from: from,
                 to: to,
                 date: dateString,
+                transfers: transfers,
                 offset: offset,
                 limit: limit
             )

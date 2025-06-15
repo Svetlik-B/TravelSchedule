@@ -62,6 +62,7 @@ func checkSearchService() async throws {
         from: "c146",
         to: "c213",
         date: Date(),
+        transfers: true,
         offset: 0,
         limit: 1
     )

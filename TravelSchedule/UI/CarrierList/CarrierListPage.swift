@@ -21,6 +21,7 @@ struct CarrierListPage: View {
                 from: from.id,
                 to: to.id,
                 date: Date(),
+                transfers: true,
                 offset: nil,
                 limit: nil
             )
@@ -40,9 +41,15 @@ struct CarrierListPage: View {
                 duration /= 60 * 60
                 let departure = (segment.departure ?? "???").prefix(11 + 5).suffix(5)
                 let arrival = (segment.arrival ?? "???").prefix(11 + 5).suffix(5)
+                var comment: String?
+                if let transfers = segment.transfers, !transfers.isEmpty {
+                    let stations = transfers.compactMap(\.title).joined(separator: ", ")
+                    comment = "С пересадкой (\(stations))"
+                }
                 return CarrierCard.ViewModel(
-                    id: segment.thread?.uid ?? "No id",
+                    id: String(departure) + String(arrival),
                     name: segment.thread?.carrier?.title ?? "No Title",
+                    comment: comment,
                     date: segment.start_date ?? "no start",
                     departure: String(departure),
                     duration: "\(duration) часов",

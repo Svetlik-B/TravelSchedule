@@ -38,6 +38,13 @@ paths:
           schema: 
             type: string
           example: 2025-06-15
+        - name: transfers
+          in: query
+          description: Признак, разрешающий добавить к результатам поиска маршруты с пересадками.
+          required: false
+          schema: 
+            type: boolean
+          example: true
         - name: offset
           in: query
           description: Смещение относительно первого результата поиска.
@@ -629,6 +636,10 @@ components:
           type: string
         start_date:
           type: string
+        transfers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transfer"
         thread:
           $ref: "#/components/schemas/Thread"
     Thread:
@@ -638,3 +649,8 @@ components:
           type: string
         carrier:
           $ref: "#/components/schemas/Carrier"
+    Transfer:
+      type: object
+      properties:
+        title:
+          type: string
