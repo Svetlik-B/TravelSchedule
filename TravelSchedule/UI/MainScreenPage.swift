@@ -1,12 +1,49 @@
 import SwiftUI
 
-struct MainScreenPage: View {
+@Observable
+final class MainScreenPageViewModel {
+    init(
+        colorScheme: ColorScheme = UIScreen.colorScheme,
+        currentTab: PageTab = PageTab.search,
+        showError: ErrorKind? = nil,
+    ) {
+        self.colorScheme = colorScheme
+        self.currentTab = currentTab
+        self.showError = showError
+        self.settings = SettingsPageViewModel(
+            colorScheme: colorScheme,
+            showUserAgreement: false
+        )
+        self.settings.setColorScheme = { [weak self] in
+            self?.colorScheme = $0
+        }
+    }
+
     enum PageTab { case search, settings }
-    @State private var isDark = true
-    @State private var tab = PageTab.search
-    @State private var showError: ErrorKind?
+
+    var colorScheme: ColorScheme
+    var currentTab = PageTab.search {
+        didSet {
+            if currentTab == .search {
+                showError = nil
+            }
+        }
+    }
+    var showError: ErrorKind?
+    
+    var settings: SettingsPageViewModel
+
+    func onError(_ error: ErrorKind) {
+        // убрать все popups
+        showError = error
+        currentTab = .settings
+    }
+}
+
+struct MainScreenPage: View {
+    @Bindable var viewModel = MainScreenPageViewModel()
     var body: some View {
-        TabView(selection: $tab) {
+        TabView(selection: $viewModel.currentTab) {
             VStack {
                 StationSelectionPage()
                 Spacer()
@@ -15,18 +52,18 @@ struct MainScreenPage: View {
             .tabItem {
                 Image(uiImage: .schedule)
             }
-            .tag(PageTab.search)
+            .tag(MainScreenPageViewModel.PageTab.search)
 
             VStack {
-                switch showError {
+                switch viewModel.showError {
+                case nil:
+                    SettingsPage(viewModel: viewModel.settings)
                 case .internet:
                     Spacer()
                     ErrorPage(kind: .internet)
                 case .server:
                     Spacer()
                     ErrorPage(kind: .server)
-                case nil:
-                    SettingsPage()
                 }
                 Spacer()
                 Divider()
@@ -34,20 +71,11 @@ struct MainScreenPage: View {
             .tabItem {
                 Image(uiImage: .settings)
             }
-            .tag(PageTab.settings)
-        }
-        .onChange(of: tab) { old, new in
-            if  old == .settings {
-                showError = nil
-            }
+            .tag(MainScreenPageViewModel.PageTab.settings)
         }
         .tint(.primary)
-        .environment(\.travelScheduleIsDarkBinding, $isDark)
-        .environment(\.colorScheme, isDark ? .dark : .light)
-        .environment(\.onError) { errorKind in
-            tab = .settings
-            showError = errorKind
-        }
+        .environment(\.colorScheme, viewModel.colorScheme)
+        .environment(\.onError, viewModel.onError)
     }
 }
 
@@ -62,6 +90,16 @@ extension EnvironmentValues {
     }
 }
 
+extension UIScreen {
+    fileprivate static var colorScheme: ColorScheme { main.traitCollection.userInterfaceStyle != .light ? .dark : .light
+    }
+}
+
 #Preview {
-    MainScreenPage()
+    MainScreenPage(
+        viewModel: .init(
+            currentTab: .settings,
+            showError: .server,
+        )
+    )
 }

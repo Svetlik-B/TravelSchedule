@@ -7,7 +7,7 @@ struct StoryListView: View {
             HStack(spacing: 12) {
                 ForEach(1..<10) { index in
                     Image("Content/\(index)/small")
-                        .cornerRadius(12)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                         .onTapGesture { viewModel = .init(id: index) }
                 }
             }

@@ -5,14 +5,9 @@ import SwiftUI
 struct TravelScheduleApp: App {
     var body: some Scene {
         WindowGroup {
-//            ContentView()
             MainScreenPage()
         }
     }
-}
-
-extension EnvironmentValues {
-    @Entry var travelScheduleIsDarkBinding: Binding<Bool> = .constant(true)
 }
 
 enum Constant {

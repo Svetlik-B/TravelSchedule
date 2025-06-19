@@ -18,13 +18,13 @@ struct ContentView: View {
         .padding()
         .task {
             do {
-//                try await checkSearchService()
-//                try await checkScheduleService()
-//                try await checkThreadServiceService()
-//                try await checkNearestStationsService()
-//                try await checkNearestSettlementService()
-//                try await checkCarrierInformationService()
-//                try await checkCopyrightService()
+                try await checkSearchService()
+                try await checkScheduleService()
+                try await checkThreadServiceService()
+                try await checkNearestStationsService()
+                try await checkNearestSettlementService()
+                try await checkCarrierInformationService()
+                try await checkCopyrightService()
                 var settlements = allSettlements
                 if settlements.isEmpty {
                     settlements = try await checkAllStationsService()

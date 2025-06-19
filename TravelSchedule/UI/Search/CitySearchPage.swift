@@ -1,10 +1,13 @@
 import SwiftUI
+import OpenAPIRuntime
 
 struct CitySearchPage: View {
     @Bindable var viewModel: CitySearchViewModel
     var cityLoader = CityLoader.live
     @State private var selectedCity: City?
     @State private var isWaiting: Bool = false
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.onError) private var onError
     var body: some View {
         VStack {
             Spacer(minLength: 0)
@@ -40,7 +43,15 @@ struct CitySearchPage: View {
                 viewModel.setFullList(cities: cities)
                 isWaiting = false
             } catch {
-                print("Error loading cities: \(error)")
+                dismiss()
+                guard
+                    let error = error as? ClientError,
+                    error.causeDescription == "Transport threw an error."
+                else {
+                    onError(.server)
+                    return
+                }
+                onError(.internet)
             }
         }
     }

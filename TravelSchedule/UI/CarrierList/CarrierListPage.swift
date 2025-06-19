@@ -1,4 +1,5 @@
 import OpenAPIURLSession
+import OpenAPIRuntime
 import SwiftUI
 
 struct CarrierListPage: View {
@@ -91,6 +92,8 @@ struct CarrierListPage: View {
     @State private var isLoading = false
     @State private var filterIsShown: Bool = false
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.onError) private var onError
     var body: some View {
         VStack {
             Text(viewModel.text).b24
@@ -134,7 +137,16 @@ struct CarrierListPage: View {
                 try await viewModel.updateCarriers()
                 isLoading = false
             } catch {
-                print("error: \(error)")
+                dismiss()
+                guard
+                    let error = error as? ClientError,
+                    error.causeDescription == "Transport threw an error."
+                else {
+                    onError(.server)
+                    return
+                }
+                onError(.internet)
+
             }
         }
     }
