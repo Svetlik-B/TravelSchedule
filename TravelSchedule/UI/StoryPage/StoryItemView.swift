@@ -1,13 +1,14 @@
 import SwiftUI
 
+struct StoryItemViewViewModel {
+    var imageName: String
+    var title: String
+    var text: String
+    var progress: CustomProgressBarViewModel
+}
+
 struct StoryItemView: View {
-    struct ViewModel {
-        var imageName: String
-        var title: String
-        var text: String
-        var progress: Double
-    }
-    var viewModel: ViewModel
+    var viewModel: StoryItemViewViewModel
     var body: some View {
         VStack {
             Spacer()
@@ -39,17 +40,17 @@ struct StoryItemView: View {
     StoryItemView(viewModel: .mock1)
 }
 
-extension StoryItemView.ViewModel {
+extension StoryItemViewViewModel {
     static let mock1: Self = .init(
-        imageName: "Content/1/big1",
+        imageName: "Content/6/big2",
         title: String(repeating: "Text ", count: 50),
         text: String(repeating: "Text ", count: 50),
-        progress: 0
+        progress: .init()
     )
     static let mock2: Self = .init(
         imageName: "Content/1/big2",
         title: String(repeating: "Text ", count: 50),
         text: String(repeating: "Text ", count: 50),
-        progress: 0
+        progress: .init()
     )
 }

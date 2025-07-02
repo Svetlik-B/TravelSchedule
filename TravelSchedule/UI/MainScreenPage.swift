@@ -99,7 +99,7 @@ extension UIScreen {
     MainScreenPage(
         viewModel: .init(
             currentTab: .settings,
-            showError: .server,
+           //showError: .server,
         )
     )
 }

@@ -1,12 +1,13 @@
 import SwiftUI
 
 struct StoryListView: View {
-    @State private var viewModel: StoryPage.ViewModel?
+    @State private var viewModel: StoryPageViewModel?
     var body: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 12) {
                 ForEach(1..<10) { index in
                     Image("Content/\(index)/small")
+                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.Colors.blueUniversal, lineWidth: 5))
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .onTapGesture { viewModel = .init(id: index) }
                 }
