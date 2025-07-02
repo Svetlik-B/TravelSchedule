@@ -2,13 +2,11 @@ import SwiftUI
 
 @Observable
 final class StoryPageViewModel: Identifiable {
-    init(id: Int, duration: Double = 5) {
-        self.id = id
+    init(items: [StoryItemViewViewModel], duration: Double = 5) {
+        self.items = items
         self.duration = duration
         self.animation = Animation.linear(duration: duration)
-        items = Self.createItems(id: id)
     }
-    let id: Int
     var isDone = false
     private let duration: Double
     private let animation: Animation
@@ -54,6 +52,9 @@ final class StoryPageViewModel: Identifiable {
     var storyHeaderViewModel: [CustomProgressBarViewModel] { items.map(\.progress) }
     var itemsCount: Int { items.count }
     func storyItemViewModel(_ index: Int) -> StoryItemViewViewModel { items[index] }
+    var completedIds: [String] {
+        items.filter(\.progress.isCompleted).map(\.imageName)
+    }
 }
 
 
@@ -86,28 +87,29 @@ struct StoryPage: View {
     }
 }
 
-extension StoryPageViewModel {
-    static func createItems(id: Int) -> [StoryItemViewViewModel] {
-        (id...9).flatMap { id in
-            [
-                .init(
-                    imageName: "Content/\(id)/big1",
-                    title: String(repeating: "Text ", count: 50),
-                    text: String(repeating: "Text ", count: 50),
-                    progress: .init()
-                ),
-                .init(
-                    imageName: "Content/\(id)/big2",
-                    title: String(repeating: "Text ", count: 50),
-                    text: String(repeating: "Text ", count: 50),
-                    progress: .init()
-                ),
-            ]
-        }
+
+// MARK: Preview
+
+private func createItems(id: Int) -> [StoryItemViewViewModel] {
+    (id...9).flatMap { id in
+        [
+            .init(
+                imageName: "Content/\(id)/big1",
+                title: String(repeating: "Text ", count: 50),
+                text: String(repeating: "Text ", count: 50),
+                progress: .init()
+            ),
+            .init(
+                imageName: "Content/\(id)/big2",
+                title: String(repeating: "Text ", count: 50),
+                text: String(repeating: "Text ", count: 50),
+                progress: .init()
+            ),
+        ]
     }
 }
 
 #Preview {
-    StoryPage(viewModel: .init(id: 7))
+    StoryPage(viewModel: .init(items: createItems(id: 1)))
         .environment(\.colorScheme, .dark)
 }
