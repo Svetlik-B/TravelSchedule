@@ -15,6 +15,7 @@ paths:
           in: query
           description: Ключ доступа к API
           required: true
+          example: 65364b60-01c8-4836-9d57-47eff3a54212
           schema:
             type: string
         - name: from
@@ -23,14 +24,28 @@ paths:
           required: true
           schema:
             type: string
-          example: c146          
+          example: s2006004
         - name: to
           in: query
           description: Код станции прибытия.
-          required: false
+          required: true
           schema:
             type: string
-          example: c213  
+          example: s9602494
+        - name: date
+          in: query
+          description: Дата, на которую необходимо получить список рейсов.
+          required: false
+          schema: 
+            type: string
+          example: 2025-06-15
+        - name: transfers
+          in: query
+          description: Признак, разрешающий добавить к результатам поиска маршруты с пересадками.
+          required: false
+          schema: 
+            type: boolean
+          example: true
         - name: offset
           in: query
           description: Смещение относительно первого результата поиска.
@@ -44,7 +59,7 @@ paths:
           required: false
           schema:
             type: integer
-          example: 2        
+          example: 100
       responses:
         "200":
           description: success
@@ -70,14 +85,14 @@ paths:
           required: true
           schema:
             type: string
-          example: s9600213          
+          example: s9600213
         - name: date
           in: query
           description: Дата, на которую необходимо получить список рейсов.
           required: false
           schema:
             type: string
-          example:           
+          example:
       responses:
         "200":
           description: success
@@ -264,6 +279,7 @@ paths:
           in: query
           description: Ключ доступа к API.
           required: true
+          example: 65364b60-01c8-4836-9d57-47eff3a54212
           schema:
             type: string
       responses:
@@ -311,14 +327,14 @@ components:
           items:
             type: object
             properties:
-              thread: 
+              thread:
                 type: object
                 properties:
-                  uid: 
+                  uid:
                     type: string
-                  title: 
+                  title:
                     type: string
-        schedule_direction: 
+        schedule_direction:
           type: object
         directions:
           type: object
@@ -350,7 +366,7 @@ components:
         to:
           type: string
         carrier:
-          $ref: "#/components/schemas/Carriers" 
+          $ref: "#/components/schemas/Carriers"
         transport_type:
           type: string
         stops:
@@ -403,13 +419,15 @@ components:
               type: string
             station_type:
               type: string
-    Codes: 
+    Codes:
       type: object
       properties:
-        icao: 
+        yandex_code:
+          type: string
+        icao:
           type: string
         sirena:
-          type: string        
+          type: string
     Interval:
       type: object
       properties:
@@ -505,6 +523,8 @@ components:
     Carrier:
       type: object
       properties:
+        code:
+          type: number
         title:
           type: string
         logo:
@@ -535,6 +555,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Country"
+      required:
+        - countries
     Country:
       type: object
       properties:
@@ -544,6 +566,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Region"
+      required:
+        - regions
     Region:
       type: object
       properties:
@@ -553,20 +577,28 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Settlement"
+      required:
+        - settlements
     Settlement:
       type: object
       properties:
+        codes:
+          $ref: "#/components/schemas/Codes"
         title:
           type: string
         stations:
           type: array
           items:
             $ref: "#/components/schemas/Station"
+      required:
+        - stations
     Station:
       type: object
       properties:
         title:
           type: string
+        codes:
+          $ref: "#/components/schemas/Codes"
         station_type:
           type: string
         direction:
@@ -588,166 +620,50 @@ components:
     SearchResponse:
       type: object
       properties:
-        search:
-          type: object
-          properties:
-            from:
-              type: object
-              properties:
-                type:
-                  type: string
-                title:
-                  type: string
-                short_title:
-                  type: string
-                popular_title:
-                  type: string
-                code:
-                  type: string
-            to:
-              type: object
-              properties:
-                type:
-                  type: string
-                title:
-                  type: string
-                short_title:
-                  type: string
-                popular_title:
-                  type: string
-                code:
-                  type: string
-            date:
-              type: string
         segments:
           type: array
           items:
-            type: object
-            properties:
-              thread:
-                type: object
-                properties:
-                  number:
-                    type: string
-                  title:
-                    type: string
-                  short_title:
-                    type: string
-                  express_type:
-                    type: string
-                  transport_type:
-                    type: string
-                  carrier:
-                    type: object
-                    properties:
-                      code:
-                        type: integer
-                      title:
-                        type: string
-                      codes:
-                        type: object
-                        properties:
-                          sirena:
-                            type: string
-                          iata:
-                            type: string
-                          icao:
-                            type: string
-                      address:
-                        type: string
-                      url:
-                        type: string
-                      email:
-                        type: string
-                      contacts:
-                        type: string
-                      phone:
-                        type: string
-                      logo:
-                        type: string
-                      logo_svg:
-                        type: string
-                  uid:
-                    type: string
-                  vehicle:
-                    type: string
-                  transport_subtype:
-                    type: object
-                    properties:
-                      title:
-                        type: string
-                      code:
-                        type: string
-                      color:
-                        type: string
-                  thread_method_link:
-                    type: string
-              stops:
-                type: string
-              from:
-                type: object
-                properties:
-                  type:
-                    type: string
-                  title:
-                    type: string
-                  short_title:
-                    type: string
-                  popular_title:
-                    type: string
-                  code:
-                    type: string
-                  station_type:
-                    type: string
-                  station_type_name:
-                    type: string
-                  transport_type:
-                    type: string
-              to:
-                type: object
-                properties:
-                  type:
-                    type: string
-                  title:
-                    type: string
-                  short_title:
-                    type: string
-                  popular_title:
-                    type: string
-                  code:
-                    type: string
-                  station_type:
-                    type: string
-                  station_type_name:
-                    type: string
-                  transport_type:
-                    type: string
-              departure_platform:
-                type: string
-              arrival_platform:
-                type: string
-              departure_terminal:
-                type: string
-              arrival_terminal:
-                type: string
-              duration:
-                type: integer
-              days:
-                type: string
-              except_days:
-                type: string
-              departure:
-                type: string
-              arrival:
-                type: string
-              start_date:
-                type: string
+            $ref: "#/components/schemas/Segment"
         pagination:
-          type: object
-          properties:
-            total:
-              type: integer
-            limit:
-              type: integer
-            offset:
-              type: integer
+          $ref: "#/components/schemas/Pagination"
+    Segment:
+      type: object
+      properties:
+        duration:
+          type: integer
+        departure: 
+          type: string
+        arrival: 
+          type: string
+        has_transfers:
+          type: boolean
+        details:
+          type: array
+          items:
+            $ref: "#/components/schemas/Detail"
+        transfers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transfer"
+        thread:
+          $ref: "#/components/schemas/Thread"
+    Thread:
+      type: object
+      properties:
+        uid:
+          type: string
+        carrier:
+          $ref: "#/components/schemas/Carrier"
+    Transfer:
+      type: object
+      properties:
+        title:
+          type: string
+    Detail: 
+      type: object
+      properties:
+        duration:
+          type: integer
+        thread: 
+          $ref: "#/components/schemas/Thread"
+        

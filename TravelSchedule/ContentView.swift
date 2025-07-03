@@ -2,6 +2,13 @@ import OpenAPIURLSession
 import SwiftUI
 
 struct ContentView: View {
+    @AppStorage("AllSettlements") private var cityData = Data()
+    var allSettlements: [City] {
+        print("Размер данных:", cityData.count)
+        let settlements = try? JSONDecoder()
+            .decode([City].self, from: cityData)
+        return settlements ?? []
+    }
     var body: some View {
         VStack {
             Image(systemName: "globe")
@@ -12,13 +19,29 @@ struct ContentView: View {
         .task {
             do {
                 try await checkSearchService()
-//                try await checkScheduleService()
-//                try await checkThreadServiceService()
-//                try await checkNearestStationsService()
-//                try await checkNearestSettlementService()
-//                try await checkCarrierInformationService()
-//                try await checkAllStationsService()
-//                try await checkCopyrightService()
+                try await checkScheduleService()
+                try await checkThreadServiceService()
+                try await checkNearestStationsService()
+                try await checkNearestSettlementService()
+                try await checkCarrierInformationService()
+                try await checkCopyrightService()
+                var settlements = allSettlements
+                if settlements.isEmpty {
+                    settlements = try await checkAllStationsService()
+                    cityData = try JSONEncoder().encode(settlements)
+                }
+                print("Всего городов:", settlements.count)
+                let stations = settlements
+                    .flatMap(\.stations)
+                print("Всего станций:", stations.count)
+                print("Первые 100:")
+                print(
+                    stations
+                        .map(\.name)
+                        .sorted()
+                        .prefix(10)
+                        .joined(separator: "\n")
+                )
             } catch {
                 print(error)
             }
@@ -38,6 +61,8 @@ func checkSearchService() async throws {
     let response = try await service.getSearch(
         from: "c146",
         to: "c213",
+        date: Date(),
+        transfers: true,
         offset: 0,
         limit: 1
     )
@@ -133,7 +158,7 @@ func checkCarrierInformationService() async throws {
     print(response)
 }
 
-func checkAllStationsService() async throws {
+func checkAllStationsService() async throws -> [City] {
     print("\nAllStationsService...")
     let service = AllStationsService(
         client: Client(
@@ -144,7 +169,40 @@ func checkAllStationsService() async throws {
     )
     let response = try await service.getAllStations()
     print("AllStationsService response:")
-    print(response.countries?.count as Any)
+    print(response.countries.count as Any)
+    
+    var cities = [City]()
+    
+    for country in response.countries {
+        if country.title != "Россия" {
+            continue
+        }
+        for region in country.regions {
+            for settlement in region.settlements {
+                if let id = settlement.codes?.yandex_code {
+                    var newCity = City(
+                        id: id,
+                        name: settlement.title ?? "Unknown",
+                        stations: []
+                    )
+                    for station in settlement.stations {
+                        if let id = station.codes?.yandex_code,
+                           station.station_type == "train_station" {
+                            let newStation = Station(
+                                id: id,
+                                name: station.title ?? "Unknown"
+                            )
+                            newCity.stations.append(newStation)
+                        }
+                    }
+                    if !newCity.stations.isEmpty {
+                        cities.append(newCity)
+                    }
+                }
+            }
+        }
+    }
+    return cities
 }
 
 func checkCopyrightService() async throws {
