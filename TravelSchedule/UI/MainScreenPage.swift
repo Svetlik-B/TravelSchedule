@@ -5,7 +5,7 @@ final class MainScreenPageViewModel {
     init(
         colorScheme: ColorScheme = UIScreen.colorScheme,
         currentTab: PageTab = PageTab.search,
-        showError: ErrorKind? = nil,
+        showError: ErrorKind? = nil
     ) {
         self.colorScheme = colorScheme
         self.currentTab = currentTab
@@ -30,7 +30,7 @@ final class MainScreenPageViewModel {
         }
     }
     var showError: ErrorKind?
-    
+
     var settings: SettingsPageViewModel
 
     func onError(_ error: ErrorKind) {
@@ -91,15 +91,15 @@ extension EnvironmentValues {
 }
 
 extension UIScreen {
-    fileprivate static var colorScheme: ColorScheme { main.traitCollection.userInterfaceStyle != .light ? .dark : .light
+    fileprivate static var colorScheme: ColorScheme {
+        main.traitCollection.userInterfaceStyle != .light ? .dark : .light
     }
 }
 
 #Preview {
     MainScreenPage(
         viewModel: .init(
-            currentTab: .settings,
-           //showError: .server,
+            currentTab: .settings
         )
     )
 }
