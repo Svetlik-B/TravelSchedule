@@ -3,7 +3,7 @@ import SwiftUI
 struct StationSelectionPage: View {
     var body: some View {
         VStack(spacing: 20) {
-            StoryListView()
+            StoryListView(viewModel: .init())
             StationSelector()
             Spacer()
         }

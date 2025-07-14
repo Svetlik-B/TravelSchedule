@@ -35,7 +35,7 @@ struct StationSelector: View {
                 CustomButton(text: "Найти", hasDot: false) {
                     carriersViewModel = .init(
                         from: from,
-                        to: to,
+                        to: to
                     )
                 }
                 .frame(width: 150)

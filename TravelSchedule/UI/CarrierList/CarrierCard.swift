@@ -71,7 +71,7 @@ extension CarrierCard.ViewModel {
         date: "14 января",
         departure: "22:30",
         duration: 1,
-        arrival: "08:15",
+        arrival: "08:15"
     )
     static let fgk = Self(
         id: "",
@@ -81,7 +81,7 @@ extension CarrierCard.ViewModel {
         date: "15 января",
         departure: "01:15",
         duration: 22,
-        arrival: "09:00",
+        arrival: "09:00"
     )
     static let ural = Self(
         id: "",
@@ -91,7 +91,7 @@ extension CarrierCard.ViewModel {
         date: "16 января",
         departure: "12:30",
         duration: 5,
-        arrival: "21:00",
+        arrival: "21:00"
     )
     func with(id: String) -> Self {
         var copy = self

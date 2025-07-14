@@ -1,81 +1,115 @@
 import SwiftUI
 
-struct StoryPage: View {
-    @Observable
-    final class ViewModel: Identifiable {
-        var id: Int
-        var items: [StoryItemView.ViewModel]
-        init(id: Int) {
-            self.id = id
-            items = Self.createItems(id: id)
+@Observable
+final class StoryPageViewModel: Identifiable {
+    init(items: [StoryItemViewViewModel], duration: Double = 5) {
+        self.items = items
+        self.duration = duration
+        self.animation = Animation.linear(duration: duration)
+    }
+    var isDone = false
+    private let duration: Double
+    private let animation: Animation
+    private(set) var currentItem: Int = 0
+    private var items: [StoryItemViewViewModel]
+    private func nextItem() {
+        items[currentItem].progress.isCompleted = false
+        items[currentItem].progress.value = 0
+        withAnimation(animation) {
+            items[currentItem].progress.value = 1
+        }
+        let current = currentItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration) { [weak self] in
+            guard let self else { return }
+            if self.currentItem == current {
+                self.tryNextItem()
+            }
         }
     }
-    var viewModel: ViewModel
-    @State private var currentItem: Int = 0
+    
+    private func tryNextItem() {
+        items[currentItem].progress.isCompleted = true
+        if currentItem < items.count - 1 {
+            currentItem = (currentItem + 1) % items.count
+            nextItem()
+        } else {
+            isDone = true
+        }
+    }
+    func onTap() { tryNextItem() }
+    func onSwipe(translation: CGSize) {
+        if abs(translation.width) > abs(translation.height) {
+            if translation.width < 0 {
+                tryNextItem()
+            }
+        } else {
+            if translation.height > 0 {
+                isDone = true
+            }
+        }
+    }
+    func startTimer() { nextItem() }
+    var storyHeaderViewModel: [CustomProgressBarViewModel] { items.map(\.progress) }
+    var itemsCount: Int { items.count }
+    func storyItemViewModel(_ index: Int) -> StoryItemViewViewModel { items[index] }
+    var completedIds: [String] {
+        items.filter(\.progress.isCompleted).map(\.imageName)
+    }
+}
+
+
+struct StoryPage: View {
+    var viewModel: StoryPageViewModel
     @Environment(\.dismiss) private var dismiss
     var body: some View {
         VStack {
-            StoryHeader(progress: viewModel.items.map(\.progress))
+            StoryHeader(progress: viewModel.storyHeaderViewModel)
                 .padding(.top)
+                .padding(.horizontal)
             Spacer()
         }
         .background {
-            ForEach(0..<viewModel.items.count, id: \.self) { index in
-                if currentItem == index {
-                    StoryItemView(viewModel: viewModel.items[index])
-                        .transition(
-                            .asymmetric(
-                                insertion: .move(edge: .trailing),
-                                removal: .move(edge: .leading)
-                            )
+            ForEach(0..<viewModel.itemsCount, id: \.self) { index in
+                if viewModel.currentItem == index {
+                    StoryItemView(viewModel: viewModel.storyItemViewModel(index))
+                        .onTapGesture { viewModel.onTap() }
+                        .gesture(
+                            DragGesture(minimumDistance: 20)
+                                .onEnded { viewModel.onSwipe(translation: $0.translation) }
                         )
                 }
             }
         }
-        .task {
-            let count = await MainActor.run { viewModel.items.count }
-            let duration: Double = 1
-            for index in 0 ..< count {
-                await MainActor.run {
-                    withAnimation(.linear(duration: duration)) {
-                        viewModel.items[index].progress = 1
-                    }
-                }
-                try? await Task.sleep(for: .seconds(duration))
-                await MainActor.run {
-                    if index == count - 1 {
-                        dismiss()
-                    } else {
-                        withAnimation {
-                            currentItem += 1
-                        }
-                    }
-                }
-            }
+        .onAppear { viewModel.startTimer() }
+        .onChange(of: viewModel.isDone) { _, isDone in
+            if isDone { dismiss() }
         }
     }
 }
 
-extension StoryPage.ViewModel {
-    static func createItems(id: Int) -> [StoryItemView.ViewModel] {
+
+// MARK: Preview
+
+private func createItems(id: Int) -> [StoryItemViewViewModel] {
+    (id...9).flatMap { id in
         [
             .init(
                 imageName: "Content/\(id)/big1",
                 title: String(repeating: "Text ", count: 50),
                 text: String(repeating: "Text ", count: 50),
-                progress: 0
+                progress: .init()
             ),
             .init(
                 imageName: "Content/\(id)/big2",
                 title: String(repeating: "Text ", count: 50),
                 text: String(repeating: "Text ", count: 50),
-                progress: 0
+                progress: .init()
             ),
         ]
     }
 }
 
 #Preview {
-    StoryPage(viewModel: .init(id: 1))
+    StoryPage(viewModel: .init(items: createItems(id: 1)))
         .environment(\.colorScheme, .dark)
 }

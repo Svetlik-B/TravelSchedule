@@ -5,7 +5,7 @@ final class SettingsPageViewModel {
     init(
         colorScheme: ColorScheme,
         showUserAgreement: Bool,
-        setColorScheme: @escaping (ColorScheme) -> Void = { _ in },
+        setColorScheme: @escaping (ColorScheme) -> Void = { _ in }
     ) {
         self.colorScheme = colorScheme
         self.setColorScheme = setColorScheme
