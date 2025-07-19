@@ -11,9 +11,9 @@ struct Station: Identifiable, Equatable, Hashable, Codable {
     var name: String
 }
 
-struct CityLoader {
-    var loadCities: () async throws -> [City]
-    static var live = Self {
+struct CityLoader: Sendable {
+    var loadCities: @Sendable () async throws -> [City]
+    static let live = CityLoader {
         let service = AllStationsService(
             client: Client(
                 serverURL: try Servers.Server1.url(),
@@ -23,42 +23,40 @@ struct CityLoader {
         )
         return try await service.getAllCities()
     }
-    static var mock: Self {
-        .init {
-            [
-                .init(
-                    id: "1",
-                    name: "Москва",
-                    stations: [
-                        .init(id: "1_1", name: "Киевский вокзал"),
-                        .init(id: "1_2", name: "Курский вокзал"),
-                        .init(id: "1_3", name: "Ярославский вокзал"),
-                        .init(id: "1_4", name: "Белорусский вокзал"),
-                        .init(id: "1_5", name: "Савёловский вокзал"),
-                        .init(id: "1_6", name: "Ленинградский вокзал"),
-                    ]
-                ),
-                .init(
-                    id: "2",
-                    name: "Санкт Петербург",
-                    stations: [
-                        .init(id: "2_1", name: "Московский вокзал"),
-                        .init(id: "2_2", name: "Ладожский вокзал"),
-                        .init(id: "2_3", name: "Финляндский вокзал"),
-                        .init(id: "2_4", name: "Витебский вокзал"),
-                        .init(id: "2_5", name: "Балтийский вокзал"),
-                    ]
-                ),
-                .init(id: "3", name: "Сочи", stations: []),
-                .init(id: "4", name: "Горный Воздух", stations: []),
-                .init(id: "5", name: "Краснодар", stations: []),
-                .init(id: "6", name: "Казань", stations: []),
-                .init(id: "7", name: "Омск", stations: []),
-                .init(id: "8", name: "Ижевск", stations: []),
-                .init(id: "9", name: "Иркутск", stations: []),
-                .init(id: "10", name: "Саратов", stations: []),
-            ]
-        }
+    static let mock = CityLoader {
+        [
+            .init(
+                id: "1",
+                name: "Москва",
+                stations: [
+                    .init(id: "1_1", name: "Киевский вокзал"),
+                    .init(id: "1_2", name: "Курский вокзал"),
+                    .init(id: "1_3", name: "Ярославский вокзал"),
+                    .init(id: "1_4", name: "Белорусский вокзал"),
+                    .init(id: "1_5", name: "Савёловский вокзал"),
+                    .init(id: "1_6", name: "Ленинградский вокзал"),
+                ]
+            ),
+            .init(
+                id: "2",
+                name: "Санкт Петербург",
+                stations: [
+                    .init(id: "2_1", name: "Московский вокзал"),
+                    .init(id: "2_2", name: "Ладожский вокзал"),
+                    .init(id: "2_3", name: "Финляндский вокзал"),
+                    .init(id: "2_4", name: "Витебский вокзал"),
+                    .init(id: "2_5", name: "Балтийский вокзал"),
+                ]
+            ),
+            .init(id: "3", name: "Сочи", stations: []),
+            .init(id: "4", name: "Горный Воздух", stations: []),
+            .init(id: "5", name: "Краснодар", stations: []),
+            .init(id: "6", name: "Казань", stations: []),
+            .init(id: "7", name: "Омск", stations: []),
+            .init(id: "8", name: "Ижевск", stations: []),
+            .init(id: "9", name: "Иркутск", stations: []),
+            .init(id: "10", name: "Саратов", stations: []),
+        ]
     }
 }
 

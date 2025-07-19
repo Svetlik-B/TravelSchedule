@@ -1,6 +1,7 @@
 import SwiftUI
 
 @Observable
+@MainActor
 final class StoryPageViewModel: Identifiable {
     init(items: [StoryItemViewViewModel], duration: Double = 5) {
         self.items = items
@@ -89,7 +90,7 @@ struct StoryPage: View {
 
 
 // MARK: Preview
-
+@MainActor
 private func createItems(id: Int) -> [StoryItemViewViewModel] {
     (id...9).flatMap { id in
         [

@@ -52,6 +52,7 @@ func createStories() -> [Story] {
 }
 
 @Observable
+@MainActor
 final class StoryListViewModel {
     var storyPageViewModel: StoryPageViewModel? {
         willSet {

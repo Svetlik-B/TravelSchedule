@@ -4,7 +4,8 @@ import SwiftUI
 
 struct CarrierListPage: View {
     @Observable
-    final class ViewModel: Identifiable {
+    @MainActor
+    final class ViewModel: @preconcurrency Identifiable {
         var id: String { from.id + "-" + to.id }
         var from: Station
         var to: Station

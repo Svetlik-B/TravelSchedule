@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct StoryItemViewViewModel {
+struct StoryItemViewViewModel: Sendable {
     var imageName: String
     var title: String
     var text: String
@@ -41,12 +41,14 @@ struct StoryItemView: View {
 }
 
 extension StoryItemViewViewModel {
+    @MainActor
     static let mock1: Self = .init(
         imageName: "Content/6/big2",
         title: String(repeating: "Text ", count: 50),
         text: String(repeating: "Text ", count: 50),
         progress: .init()
     )
+    @MainActor
     static let mock2: Self = .init(
         imageName: "Content/1/big2",
         title: String(repeating: "Text ", count: 50),

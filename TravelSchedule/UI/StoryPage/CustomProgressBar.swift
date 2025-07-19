@@ -1,6 +1,7 @@
 import SwiftUI
 
 @Observable
+@MainActor
 final class CustomProgressBarViewModel {
     init(value: Double = 0, isCompleted: Bool = false) {
         self.value = value

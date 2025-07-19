@@ -2,7 +2,7 @@ import SwiftUI
 
 struct CustomButton: View {
     enum Constant {
-        static var height: CGFloat = 60
+        static let height: CGFloat = 60
     }
     var text: String
     var hasDot: Bool = false

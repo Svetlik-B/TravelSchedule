@@ -1,6 +1,7 @@
 import SwiftUI
 
 @Observable
+@MainActor
 final class MainScreenPageViewModel {
     init(
         colorScheme: ColorScheme = UIScreen.colorScheme,
