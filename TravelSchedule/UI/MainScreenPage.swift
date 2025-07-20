@@ -1,8 +1,7 @@
 import SwiftUI
 
-@Observable
 @MainActor
-final class MainScreenPageViewModel {
+final class MainScreenPageViewModel: ObservableObject {
     init(
         colorScheme: ColorScheme = UIScreen.colorScheme,
         currentTab: PageTab = PageTab.search,
@@ -22,17 +21,17 @@ final class MainScreenPageViewModel {
 
     enum PageTab { case search, settings }
 
-    var colorScheme: ColorScheme
-    var currentTab = PageTab.search {
+    @Published var colorScheme: ColorScheme
+    @Published var currentTab = PageTab.search {
         didSet {
             if currentTab == .search {
                 showError = nil
             }
         }
     }
-    var showError: ErrorKind?
+    @Published var showError: ErrorKind?
 
-    var settings: SettingsPageViewModel
+    @Published var settings: SettingsPageViewModel
 
     func onError(_ error: ErrorKind) {
         // убрать все popups
@@ -42,7 +41,7 @@ final class MainScreenPageViewModel {
 }
 
 struct MainScreenPage: View {
-    @Bindable var viewModel = MainScreenPageViewModel()
+    @ObservedObject var viewModel = MainScreenPageViewModel()
     var body: some View {
         TabView(selection: $viewModel.currentTab) {
             VStack {
