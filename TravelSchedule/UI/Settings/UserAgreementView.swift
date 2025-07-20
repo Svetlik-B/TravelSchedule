@@ -1,5 +1,4 @@
 import SwiftUI
-//import UIKit
 import WebKit
 
 struct UserAgreementView: View {

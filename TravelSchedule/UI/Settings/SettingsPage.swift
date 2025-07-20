@@ -1,7 +1,7 @@
 import SwiftUI
 
-@Observable
-final class SettingsPageViewModel {
+@MainActor
+final class SettingsPageViewModel: ObservableObject {
     init(
         colorScheme: ColorScheme,
         showUserAgreement: Bool,
@@ -12,19 +12,19 @@ final class SettingsPageViewModel {
         self.showUserAgreement = showUserAgreement
         self.isDark = colorScheme == .dark
     }
-    var isDark: Bool {
+    @Published var isDark: Bool {
         didSet {
             colorScheme = isDark ? .dark : .light
             setColorScheme(colorScheme)
         }
     }
-    var colorScheme: ColorScheme
+    @Published var colorScheme: ColorScheme
+    @Published var showUserAgreement: Bool
     var setColorScheme: (ColorScheme) -> Void
-    var showUserAgreement: Bool
 }
 
 struct SettingsPage: View {
-    @Bindable var viewModel: SettingsPageViewModel
+    @ObservedObject var viewModel: SettingsPageViewModel
     @Environment(\.colorScheme) var colorScheme
     var body: some View {
         VStack {
