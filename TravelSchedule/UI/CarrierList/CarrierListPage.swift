@@ -143,10 +143,10 @@ struct CarrierListPage: View {
                     let error = error as? ClientError,
                     error.causeDescription == "Transport threw an error."
                 else {
-                    onError(.server)
+                    onError(ErrorKind.server)
                     return
                 }
-                onError(.internet)
+                onError(ErrorKind.internet)
 
             }
         }

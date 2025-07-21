@@ -2,12 +2,30 @@ import SwiftUI
 
 @MainActor
 final class StationSelectorViewModel: ObservableObject {
-    @Published var showFromCitySelector: Bool = false
-    @Published var showToCitySelector: Bool = false
+    @Published var showFromCitySelector: Bool
+    @Published var showToCitySelector: Bool
     @Published var from: Station?
     @Published var to: Station?
     @Published var carriersViewModel: CarrierListPage.ViewModel?
 
+    var onError: (Error) -> ()
+    
+    init(
+        showFromCitySelector: Bool = false,
+        showToCitySelector: Bool = false,
+        from: Station? = nil,
+        to: Station? = nil,
+        carriersViewModel: CarrierListPage.ViewModel? = nil,
+        onError: @escaping (Error) -> Void
+    ) {
+        self.showFromCitySelector = showFromCitySelector
+        self.showToCitySelector = showToCitySelector
+        self.from = from
+        self.to = to
+        self.carriersViewModel = carriersViewModel
+        self.onError = onError
+    }
+    
     func toggleDirection() { (from, to) = (to, from) }
     func performSearch(from: Station, to: Station) {
         carriersViewModel = .init(
@@ -18,7 +36,7 @@ final class StationSelectorViewModel: ObservableObject {
 }
 
 struct StationSelector: View {
-    @ObservedObject var viewModel = StationSelectorViewModel()
+    @ObservedObject var viewModel: StationSelectorViewModel
     @Environment(\.colorScheme) private var colorScheme
     var body: some View {
         VStack(spacing: 16) {
@@ -65,14 +83,16 @@ struct StationSelector: View {
         .fullScreenCover(isPresented: $viewModel.showFromCitySelector) {
             CitySelectionView(
                 direction: $viewModel.from,
-                showCitySelector: $viewModel.showFromCitySelector
+                showCitySelector: $viewModel.showFromCitySelector,
+                onError: viewModel.onError
             )
             .environment(\.colorScheme, colorScheme)
         }
         .fullScreenCover(isPresented: $viewModel.showToCitySelector) {
             CitySelectionView(
                 direction: $viewModel.to,
-                showCitySelector: $viewModel.showToCitySelector
+                showCitySelector: $viewModel.showToCitySelector,
+                onError: viewModel.onError
             )
             .environment(\.colorScheme, colorScheme)
         }
@@ -81,10 +101,14 @@ struct StationSelector: View {
     struct CitySelectionView: View {
         @Binding var direction: Station?
         @Binding var showCitySelector: Bool
+        var onError: (Error) -> Void
         var body: some View {
             NavigationStack {
                 CitySearchPage(
                     viewModel: .init(
+                        cityLoader: .live,
+                        dismiss: { showCitySelector = false },
+                        onError: onError,
                         onStationSelected: { city, station in
                             direction = station
                             showCitySelector = false
@@ -116,5 +140,7 @@ struct StationSelector: View {
 }
 
 #Preview {
-    StationSelector()
+    StationSelector(
+        viewModel: .init { print("error:", $0) }
+    )
 }

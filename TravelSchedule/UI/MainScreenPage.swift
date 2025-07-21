@@ -1,3 +1,4 @@
+import OpenAPIRuntime
 import SwiftUI
 
 @MainActor
@@ -33,9 +34,20 @@ final class MainScreenPageViewModel: ObservableObject {
 
     @Published var settings: SettingsPageViewModel
 
-    func onError(_ error: ErrorKind) {
+    func onError(_ error: Error) {
         // убрать все popups
-        showError = error
+        if let error = error as? ClientError {
+            let underlyingError = error.underlyingError as NSError
+            if underlyingError.code == -999 {
+                print("Cancelled by user")
+                return
+            }
+            showError = .server
+            currentTab = .settings
+            return
+        }
+        print("Got error:", error)
+        showError = .internet
         currentTab = .settings
     }
 }
@@ -45,7 +57,7 @@ struct MainScreenPage: View {
     var body: some View {
         TabView(selection: $viewModel.currentTab) {
             VStack {
-                StationSelectionPage()
+                StationSelectionPage(onError: viewModel.onError)
                 Spacer()
                 Divider()
             }
@@ -79,14 +91,14 @@ struct MainScreenPage: View {
     }
 }
 
-enum ErrorKind {
+enum ErrorKind: Error {
     case internet
     case server
 }
 
 extension EnvironmentValues {
-    @Entry var onError: (ErrorKind) -> Void = {
-        print("ErrorKind: \($0)")
+    @Entry var onError: (Error) -> Void = {
+        print("Error: \($0)")
     }
 }
 

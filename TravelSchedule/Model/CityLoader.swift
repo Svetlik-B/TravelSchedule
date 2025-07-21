@@ -1,18 +1,12 @@
-import Observation
 import OpenAPIURLSession
-
-struct City: Identifiable, Equatable, Hashable, Codable {
-    var id: String
-    var name: String
-    var stations: [Station]
-}
-struct Station: Identifiable, Equatable, Hashable, Codable {
-    var id: String
-    var name: String
-}
+import SwiftUI
 
 struct CityLoader: Sendable {
     var loadCities: @Sendable () async throws -> [City]
+}
+
+// боевой загрузчик
+extension CityLoader {
     static let live = CityLoader {
         let service = AllStationsService(
             client: Client(
@@ -21,10 +15,51 @@ struct CityLoader: Sendable {
             ),
             apikey: Constant.apiKey
         )
-        return try await service.getAllCities()
+        let allStations = try await service.getAllStations()
+        let filteredCountries = allStations.countries
+            .filter { $0.title == "Россия"}
+        
+        return filteredCountries
+            .flatMap(\.regions)
+            .flatMap(\.cities)
     }
+}
+
+private extension Components.Schemas.Region {
+    var cities: [City] {
+        settlements
+            .map {($0.codes?.yandex_code, $0.title, $0.trainStations)}
+            .compactMap { code, title, stations -> City? in
+                guard let code, let title, !stations.isEmpty
+                else { return nil }
+                return City(
+                    id: code,
+                    name: title,
+                    stations: stations
+                )
+            }
+    }
+}
+
+private extension Components.Schemas.Settlement {
+    var trainStations: [Station] {
+        stations
+            .filter { $0.transport_type == "train"}
+            .map {($0.codes?.yandex_code, $0.title) }
+            .compactMap { (code, title) -> Station? in
+                guard let code, let title
+                else { return nil }
+                return Station(id: code, name: title)
+            }
+    }
+}
+
+
+// тестовый загрузчик (перенести в тесты когда они появятся :)
+extension CityLoader {
     static let mock = CityLoader {
-        [
+        print("Используем тестовые данные!!!")
+        return [
             .init(
                 id: "1",
                 name: "Москва",
@@ -57,73 +92,5 @@ struct CityLoader: Sendable {
             .init(id: "9", name: "Иркутск", stations: []),
             .init(id: "10", name: "Саратов", stations: []),
         ]
-    }
-}
-
-@Observable
-final class CitySearchViewModel {
-    var searchText = ""
-    private var fullList = [City]()
-
-    var onStationSelected: (City, Station) -> Void
-
-    init(onStationSelected: @escaping (City, Station) -> Void) {
-        self.onStationSelected = onStationSelected
-    }
-}
-
-// MARK: Interface
-extension CitySearchViewModel {
-    func city(id: String) -> City? {
-        fullList.first(where: { $0.id == id })
-    }
-    var filteredCities: [City] {
-        if searchText.isEmpty {
-            return Self.shortListCitiesNames
-                .compactMap { name in
-                    fullList.first(where: { city in
-                        city.name == name
-                    })
-                }
-        } else {
-            return fullList.filter { item in
-                item.name.localizedCaseInsensitiveContains(searchText)
-            }
-        }
-    }
-    func setFullList(cities: [City]) { fullList = cities }
-}
-
-extension CitySearchViewModel {
-    fileprivate static let shortListCitiesNames: [String] = [
-        "Москва",
-        "Санкт-Петербург",
-        "Сочи",  //??
-        "Горный Воздух",  //??
-        "Краснодар",  //??
-        "Казань",
-        "Омск",
-    ]
-
-}
-
-extension CitySearchViewModel {
-    static func live(
-        onStationSelected: @escaping (City, Station) -> Void
-    ) -> CitySearchViewModel {
-        .init(
-            onStationSelected: onStationSelected
-        )
-    }
-}
-
-extension CitySearchViewModel {
-    static func mock(
-        onStationSelected: @escaping (City, Station) -> Void
-    ) -> CitySearchViewModel {
-        .init(
-            //            fullList: [
-            onStationSelected: onStationSelected
-        )
     }
 }
