@@ -22,16 +22,71 @@ final class CarrierListPageViewModel: ObservableObject, Identifiable {
 
     @Published var carriers = [CarrierCard.ViewModel]()
     @Published var isLoading = false
-    @Published var hasFilter = false
     @Published var filterIsShown: Bool = false
+    private var filters: CarrierFilterPageViewModel.Filters = .init()
+    private let iso8601DateFormatter = ISO8601DateFormatter()
+    private let dateFormatter: DateFormatter = {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "d MMMM"
+        return dateFormatter
+    }()
 }
 
 extension CarrierListPageViewModel {
+    var filteredCarriers: [CarrierCard.ViewModel] {
+        carriers.filter { carrier in
+            guard hasFilter
+            else { return true }
+
+            if filters.showWithTransfers == false && carrier.comment != nil {
+                return false
+            }
+
+            if !filters.showMorning
+                && !filters.showDay
+                && !filters.showEvening
+                && !filters.showNight
+            {
+                return true
+            }
+
+            guard
+                let departureHourString = carrier.departure.split(separator: ":").first,
+                let departureHour = Int(departureHourString)
+            else { return true }
+
+            if filters.showMorning && departureHour >= 6 && departureHour < 12 {
+                return true
+            }
+            if filters.showDay && departureHour >= 12 && departureHour < 18 {
+                return true
+            }
+            if filters.showEvening && departureHour >= 18 {
+                return true
+            }
+            if filters.showNight && departureHour < 6 {
+                return true
+            }
+            return false
+        }
+    }
+    func showFilters() {
+        filters = .init()
+        filterIsShown = true
+    }
+    var hasFilter: Bool {
+        filters.showMorning
+            || filters.showDay
+            || filters.showEvening
+            || filters.showNight
+            || filters.showWithTransfers != nil
+    }
+
     var text: String {
         "\(from.name) -> \(to.name)"
     }
     var hasNoCarriers: Bool {
-        carriers.isEmpty
+        filteredCarriers.isEmpty
     }
     func update() async {
         isLoading = true
@@ -43,27 +98,35 @@ extension CarrierListPageViewModel {
             dismiss()
         }
     }
-    
+
+    func applyFilters(_ newFilters: CarrierFilterPageViewModel.Filters) {
+        filters = newFilters
+    }
+
     func updateCarriers() async throws {
         let service = try SearchService(
             client: Client(serverURL: Servers.Server1.url(), transport: URLSessionTransport()),
             apikey: Constant.apiKey
         )
-        print("from:", from)
-        print("to:", to)
-        let result = try await service.getSearch(
+        var result = try await service.getSearch(
             from: from.id,
             to: to.id,
             date: Date(),
             transfers: true,
             offset: nil,
-            limit: nil
+            limit: 1
+        )
+        
+        result = try await service.getSearch(
+            from: from.id,
+            to: to.id,
+            date: Date(),
+            transfers: true,
+            offset: nil,
+            limit: result.pagination?.total
         )
 
         // TODO: logo
-        // TODO: mock
-        // TODO: filter
-        // TODO: more then 100
 
         let segments = result.segments ?? []
         carriers = segments.compactMap { segment in
@@ -72,8 +135,8 @@ extension CarrierListPageViewModel {
 
             duration /= 60 * 60
 
-            let departure = (segment.departure ?? "???").prefix(11 + 5).suffix(5)
-            let arrival = (segment.arrival ?? "???").prefix(11 + 5).suffix(5)
+            let departure = segment.departure?.prefix(11 + 5).suffix(5)
+            let arrival = segment.arrival?.prefix(11 + 5).suffix(5)
             var comment: String?
             if let transfers = segment.transfers, !transfers.isEmpty {
                 let stations = transfers.compactMap(\.title).joined(separator: ", ")
@@ -81,10 +144,8 @@ extension CarrierListPageViewModel {
             }
             var dateString = "No Date"
             if let departureDate = segment.departure,
-                let date = ISO8601DateFormatter().date(from: departureDate)
+                let date = iso8601DateFormatter.date(from: departureDate)
             {
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "d MMMM"
                 dateString = dateFormatter.string(from: date)
             }
             let id = [segment.departure, segment.arrival]
@@ -94,16 +155,16 @@ extension CarrierListPageViewModel {
             let name =
                 segment.thread?.carrier?.title ?? segment.details?.compactMap(
                     \.thread?.carrier?.title
-                ).first ?? "No Name 22"
+                ).first ?? "No Name"
 
             return CarrierCard.ViewModel(
                 id: id,
                 name: name,
                 comment: comment,
                 date: dateString,
-                departure: String(departure),
+                departure: String(departure ?? ""),
                 duration: duration,
-                arrival: String(arrival)
+                arrival: String(arrival ?? "")
             )
         }
     }
@@ -121,9 +182,18 @@ struct CarrierListPage: View {
             } else if viewModel.hasNoCarriers {
                 NotFoundView(text: "Вариантов нет")
                     .offset(y: -CustomButton.Constant.height)
+                    .overlay(alignment: .bottom) {
+                        if viewModel.hasFilter {
+                            CustomButton(
+                                text: "Уточнить время",
+                                hasDot: viewModel.hasFilter
+                            ) { viewModel.showFilters() }
+                            .padding()
+                        }
+                    }
             } else {
                 List {
-                    ForEach(viewModel.carriers) { carrier in
+                    ForEach(viewModel.filteredCarriers) { carrier in
                         CarrierCard(viewModel: carrier)
                             .listRowBackground(Color.clear)
                             .background {
@@ -140,14 +210,16 @@ struct CarrierListPage: View {
                     CustomButton(
                         text: "Уточнить время",
                         hasDot: viewModel.hasFilter
-                    ) { viewModel.filterIsShown = true }
+                    ) { viewModel.showFilters() }
                     .padding()
                 }
             }
         }
         .fullScreenCover(isPresented: $viewModel.filterIsShown) {
-            CarrierFilterPageWrapper(isShown: $viewModel.filterIsShown)
-                .environment(\.colorScheme, colorScheme)
+            CarrierFilterPageWrapper(isShown: $viewModel.filterIsShown) { filters in
+                viewModel.applyFilters(filters)
+            }
+            .environment(\.colorScheme, colorScheme)
         }
         .task { await viewModel.update() }
     }
@@ -155,9 +227,10 @@ struct CarrierListPage: View {
 
 struct CarrierFilterPageWrapper: View {
     @Binding var isShown: Bool
+    let action: (CarrierFilterPageViewModel.Filters) -> Void
     var body: some View {
         let viewModel = CarrierFilterPageViewModel { filters in
-            print(filters)
+            action(filters)
             isShown = false
         }
         NavigationStack {
