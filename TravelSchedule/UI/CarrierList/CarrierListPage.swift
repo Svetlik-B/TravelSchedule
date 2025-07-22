@@ -156,8 +156,8 @@ struct CarrierListPage: View {
 struct CarrierFilterPageWrapper: View {
     @Environment(\.dismiss) private var dismiss
     var body: some View {
-        let viewModel: CarrierFilterPage.ViewModel = {
-            let viewModel = CarrierFilterPage.ViewModel()
+        let viewModel: CarrierFilterPageViewModel = {
+            let viewModel = CarrierFilterPageViewModel()
             viewModel.proceed = { dismiss() }
             return viewModel
         }()

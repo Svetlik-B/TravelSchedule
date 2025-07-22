@@ -1,27 +1,27 @@
 import SwiftUI
 import Observation
 
-struct CarrierFilterPage: View {
-    @Observable
-    final class ViewModel {
-        var showMorning = false
-        var showDay = false
-        var showEvening = false
-        var showNight = false
-        var showWithTransfers: Bool? = nil
-        var showWithTransfersYes: Bool {
-            get { showWithTransfers == true }
-            set { showWithTransfers = newValue }
-        }
-        var showWithTransfersNo: Bool {
-            get { showWithTransfers == false }
-            set { showWithTransfers = !newValue }
-        }
-        var canProceed: Bool { showWithTransfers != nil }
-        var proceed: () -> Void = {}
+@MainActor
+final class CarrierFilterPageViewModel: ObservableObject {
+    @Published var showMorning = false
+    @Published var showDay = false
+    @Published var showEvening = false
+    @Published var showNight = false
+    @Published var showWithTransfers: Bool? = nil
+    var showWithTransfersYes: Bool {
+        get { showWithTransfers == true }
+        set { showWithTransfers = newValue }
     }
+    var showWithTransfersNo: Bool {
+        get { showWithTransfers == false }
+        set { showWithTransfers = !newValue }
+    }
+    var canProceed: Bool { showWithTransfers != nil }
+    var proceed: () -> Void = {}
+}
 
-    @Bindable var viewModel: ViewModel
+struct CarrierFilterPage: View {
+    @ObservedObject var viewModel: CarrierFilterPageViewModel
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Время отправления").b24
@@ -105,8 +105,8 @@ struct Line: View {
 }
 
 #Preview {
-    let viewModel: CarrierFilterPage.ViewModel = {
-        let viewModel = CarrierFilterPage.ViewModel()
+    let viewModel: CarrierFilterPageViewModel = {
+        let viewModel = CarrierFilterPageViewModel()
         viewModel.proceed = { print("Поехали!") }
         return viewModel
     }()
