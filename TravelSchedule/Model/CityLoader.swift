@@ -74,7 +74,7 @@ extension CityLoader {
             ),
             .init(
                 id: "2",
-                name: "Санкт Петербург",
+                name: "Санкт-Петербург",
                 stations: [
                     .init(id: "2_1", name: "Московский вокзал"),
                     .init(id: "2_2", name: "Ладожский вокзал"),

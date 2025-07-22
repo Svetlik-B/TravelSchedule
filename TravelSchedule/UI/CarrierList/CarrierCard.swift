@@ -1,24 +1,79 @@
+import OpenAPIURLSession
 import SwiftUI
 
-struct CarrierCard: View {
-    struct ViewModel: Identifiable {
-        var id: String
-        var logo: UIImage?
-        var name: String
-        var comment: String?
-        var date: String
-        var departure: String
-        var duration: Int
-        var arrival: String
+@MainActor
+final class CarrierCardViewModel: Identifiable, ObservableObject {
+    init(
+        code: Int? = nil,
+        logo: UIImage? = nil,
+        name: String,
+        comment: String? = nil,
+        date: String,
+        departure: String,
+        duration: Int,
+        arrival: String,
+        onError: @escaping (Error) -> Void
+    ) {
+        self.code = code
+        self.logo = logo
+        self.name = name
+        self.comment = comment
+        self.date = date
+        self.departure = departure
+        self.duration = duration
+        self.arrival = arrival
+        self.onError = onError
     }
-    var viewModel: ViewModel
+    let onError: (Error) -> Void
+    @Published var code: Int?
+    @Published var logo: UIImage?
+    @Published var name: String
+    @Published var comment: String?
+    @Published var date: String
+    @Published var departure: String
+    @Published var duration: Int
+    @Published var arrival: String
+
+    func updateLogo() async {
+        guard
+            logo == nil,
+            let code
+        else { return }
+
+        do {
+            let service = try CarrierInformationService(
+                client: Client(
+                    serverURL: Servers.Server1.url(),
+                    transport: URLSessionTransport()
+                ),
+                apikey: Constant.apiKey
+            )
+            let result = try await service.getCarrierInformation(code: "\(code)")
+            
+            guard
+                let logoURl = result.carrier?.logo,
+                let url = URL(string: logoURl)
+            else { return }
+            
+            let (data, _) = try await URLSession.shared.data(from: url)
+            logo = UIImage(data: data)
+
+        } catch {
+            onError(error)
+        }
+
+    }
+}
+
+struct CarrierCard: View {
+    @ObservedObject var viewModel: CarrierCardViewModel
     var body: some View {
         VStack(spacing: 4) {
             Spacer().frame(height: 10)
             HStack {
                 Image(uiImage: viewModel.logo ?? .checker)
                     .resizable()
-                    .aspectRatio(contentMode: .fill)
+                    .aspectRatio(contentMode: .fit)
                     .frame(width: 38, height: 38)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 VStack(alignment: .leading) {
@@ -46,6 +101,7 @@ struct CarrierCard: View {
             }
             .frame(height: 48)
         }
+        .task { await viewModel.updateLogo() }
         .foregroundStyle(.black)
         .padding(.horizontal, 14)
         .background(Color.Colors.lightGray)
@@ -62,51 +118,44 @@ struct CarrierCard: View {
     }
 }
 
-extension CarrierCard.ViewModel {
-    static let rzd = Self(
-        id: "",
+extension CarrierCardViewModel {
+    static let rzd = CarrierCardViewModel(
         logo: .rzd,
         name: "РЖД",
         comment: "С пересадкой в Костроме",
         date: "14 января",
         departure: "22:30",
         duration: 1,
-        arrival: "08:15"
+        arrival: "08:15",
+        onError: { _ in }
     )
-    static let fgk = Self(
-        id: "",
+    static let fgk = CarrierCardViewModel(
         logo: .fgk,
         name: "ФГК",
         comment: nil,
         date: "15 января",
         departure: "01:15",
         duration: 22,
-        arrival: "09:00"
+        arrival: "09:00",
+        onError: { _ in }
     )
-    static let ural = Self(
-        id: "",
+    static let ural = CarrierCardViewModel(
         logo: .ural,
         name: "Урал логистика",
         comment: nil,
         date: "16 января",
         departure: "12:30",
         duration: 5,
-        arrival: "21:00"
+        arrival: "21:00",
+        onError: { _ in }
     )
-    func with(id: String) -> Self {
-        var copy = self
-        copy.id = id
-        return copy
-    }
     var noLogo: Self {
-        var copy = self
-        copy.logo = nil
-        return copy
+        logo = nil
+        return self
     }
     var noComment: Self {
-        var copy = self
-        copy.comment = nil
-        return copy
+        comment = nil
+        return self
     }
 }
 

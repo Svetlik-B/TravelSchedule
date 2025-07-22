@@ -20,7 +20,7 @@ final class CarrierListPageViewModel: ObservableObject, Identifiable {
         self.onError = onError
     }
 
-    @Published var carriers = [CarrierCard.ViewModel]()
+    @Published var carriers = [CarrierCardViewModel]()
     @Published var isLoading = false
     @Published var filterIsShown: Bool = false
     private var filters: CarrierFilterPageViewModel.Filters = .init()
@@ -33,7 +33,7 @@ final class CarrierListPageViewModel: ObservableObject, Identifiable {
 }
 
 extension CarrierListPageViewModel {
-    var filteredCarriers: [CarrierCard.ViewModel] {
+    var filteredCarriers: [CarrierCardViewModel] {
         carriers.filter { carrier in
             guard hasFilter
             else { return true }
@@ -116,7 +116,7 @@ extension CarrierListPageViewModel {
             offset: nil,
             limit: 1
         )
-        
+
         result = try await service.getSearch(
             from: from.id,
             to: to.id,
@@ -148,23 +148,26 @@ extension CarrierListPageViewModel {
             {
                 dateString = dateFormatter.string(from: date)
             }
-            let id = [segment.departure, segment.arrival]
-                .compactMap { $0 }
-                .joined(separator: " -> ")
-
             let name =
                 segment.thread?.carrier?.title ?? segment.details?.compactMap(
                     \.thread?.carrier?.title
                 ).first ?? "No Name"
+            
+            let code =
+                segment.thread?.carrier?.code ?? segment.details?.compactMap(
+                    \.thread?.carrier?.code
+                ).first
 
-            return CarrierCard.ViewModel(
-                id: id,
+            
+            return CarrierCardViewModel(
+                code: code,
                 name: name,
                 comment: comment,
                 date: dateString,
                 departure: String(departure ?? ""),
                 duration: duration,
-                arrival: String(arrival ?? "")
+                arrival: String(arrival ?? ""),
+                onError: onError
             )
         }
     }
@@ -272,25 +275,5 @@ struct CarrierInfoPageWrapper: View {
                 onError: { print("error:", $0) }
             )
         )
-    }
-}
-
-var mockCarriers: [CarrierCard.ViewModel] {
-    makeIds(carriers: [
-        .rzd,
-        .fgk,
-        .ural,
-        .rzd,
-        .fgk,
-        .ural,
-        .rzd,
-        .fgk,
-        .ural,
-    ])
-}
-
-func makeIds(carriers: [CarrierCard.ViewModel]) -> [CarrierCard.ViewModel] {
-    carriers.enumerated().map { index, carrier in
-        carrier.with(id: "\(index)")
     }
 }

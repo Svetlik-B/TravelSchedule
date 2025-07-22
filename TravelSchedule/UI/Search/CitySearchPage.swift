@@ -72,7 +72,7 @@ extension CitySearchViewModel {
 extension CitySearchViewModel {
     fileprivate static let shortListCitiesNames: [String] = [
         "Москва",
-        "Санкт Петербург",
+        "Санкт-Петербург",
         "Сочи",
         "Горный Воздух",
         "Краснодар",

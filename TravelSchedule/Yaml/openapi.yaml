@@ -38,7 +38,7 @@ paths:
           required: false
           schema: 
             type: string
-          example: 2025-06-15
+          example: 2025-08-15
         - name: transfers
           in: query
           description: Признак, разрешающий добавить к результатам поиска маршруты с пересадками.
@@ -524,10 +524,12 @@ components:
       type: object
       properties:
         code:
-          type: number
+          type: integer
         title:
           type: string
         logo:
+          type: string
+        logo_svg:
           type: string
         url:
           type: string
