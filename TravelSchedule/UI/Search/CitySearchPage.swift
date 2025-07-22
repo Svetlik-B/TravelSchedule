@@ -102,9 +102,14 @@ struct CitySearchPage: View {
             }
         }
         .navigationDestination(item: $viewModel.selectedCity) { city in
-            StationSearchPage(city: city) { station in
-                viewModel.onStationSelected(city, station)
-            }
+            StationSearchPage(
+                viewModel: .init(
+                    city: city,
+                    action: { station in
+                        viewModel.onStationSelected(city, station)
+                    }
+                )
+            )
             .customNavigationBar(
                 title: "Выбор станции",
                 action: { viewModel.selectedCity = nil }
