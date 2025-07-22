@@ -146,7 +146,7 @@ struct CarrierListPage: View {
             }
         }
         .fullScreenCover(isPresented: $viewModel.filterIsShown) {
-            CarrierFilterPageWrapper()
+            CarrierFilterPageWrapper(isShown: $viewModel.filterIsShown)
                 .environment(\.colorScheme, colorScheme)
         }
         .task { await viewModel.update() }
@@ -154,17 +154,16 @@ struct CarrierListPage: View {
 }
 
 struct CarrierFilterPageWrapper: View {
-    @Environment(\.dismiss) private var dismiss
+    @Binding var isShown: Bool
     var body: some View {
-        let viewModel: CarrierFilterPageViewModel = {
-            let viewModel = CarrierFilterPageViewModel()
-            viewModel.proceed = { dismiss() }
-            return viewModel
-        }()
+        let viewModel = CarrierFilterPageViewModel { filters in
+            print(filters)
+            isShown = false
+        }
         NavigationStack {
             CarrierFilterPage(viewModel: viewModel)
                 .customNavigationBar(title: "") {
-                    dismiss()
+                    isShown = false
                 }
         }
     }
