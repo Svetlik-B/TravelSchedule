@@ -1,107 +1,124 @@
-import OpenAPIURLSession
 import OpenAPIRuntime
+import OpenAPIURLSession
 import SwiftUI
 
-struct CarrierListPage: View {
-    @Observable
-    @MainActor
-    final class ViewModel: @preconcurrency Identifiable {
-        var id: String { from.id + "-" + to.id }
-        var from: Station
-        var to: Station
-        var carriers = [CarrierCard.ViewModel]()
-        var hasFilter = false
+@MainActor
+final class CarrierListPageViewModel: ObservableObject, Identifiable {
+    let from: Station
+    let to: Station
+    let dismiss: () -> Void
+    let onError: (Error) -> Void
+    init(
+        from: Station,
+        to: Station,
+        dismiss: @escaping () -> Void,
+        onError: @escaping (Error) -> Void
+    ) {
+        self.from = from
+        self.to = to
+        self.dismiss = dismiss
+        self.onError = onError
+    }
 
-        func updateCarriers() async throws {
-            let service = try SearchService(
-                client: Client(serverURL: Servers.Server1.url(), transport: URLSessionTransport()),
-                apikey: Constant.apiKey
-            )
-            print("from:", from)
-            print("to:", to)
-            let result = try await service.getSearch(
-                from: from.id,
-                to: to.id,
-                date: Date(),
-                transfers: true,
-                offset: nil,
-                limit: nil
-            )
+    @Published var carriers = [CarrierCard.ViewModel]()
+    @Published var isLoading = false
+    @Published var hasFilter = false
+    @Published var filterIsShown: Bool = false
+}
 
-            // TODO: logo
-            // TODO: mock
-            // TODO: filter
-            // TODO: more then 100
-
-            let segments = result.segments ?? []
-            carriers = segments.compactMap { segment in
-                var duration =
-                    segment.duration ?? segment.details?.compactMap(\.duration).reduce(0, +) ?? 0
-
-                duration /= 60 * 60
-
-                let departure = (segment.departure ?? "???").prefix(11 + 5).suffix(5)
-                let arrival = (segment.arrival ?? "???").prefix(11 + 5).suffix(5)
-                var comment: String?
-                if let transfers = segment.transfers, !transfers.isEmpty {
-                    let stations = transfers.compactMap(\.title).joined(separator: ", ")
-                    comment = "С пересадкой (\(stations))"
-                }
-                var dateString = "No Date"
-                if let departureDate = segment.departure,
-                    let date = ISO8601DateFormatter().date(from: departureDate)
-                {
-                    let dateFormatter = DateFormatter()
-                    dateFormatter.dateFormat = "d MMMM"
-                    dateString = dateFormatter.string(from: date)
-                }
-                let id = [segment.departure, segment.arrival]
-                    .compactMap { $0 }
-                    .joined(separator: " -> ")
-
-                let name =
-                    segment.thread?.carrier?.title ?? segment.details?.compactMap(
-                        \.thread?.carrier?.title
-                    ).first ?? "No Name 22"
-
-                return CarrierCard.ViewModel(
-                    id: id,
-                    name: name,
-                    comment: comment,
-                    date: dateString,
-                    departure: String(departure),
-                    duration: duration,
-                    arrival: String(arrival)
-                )
-            }
-
-        }
-
-        var text: String {
-            "\(from.name) -> \(to.name)"
-        }
-
-        init(
-            from: Station,
-            to: Station
-        ) {
-            self.from = from
-            self.to = to
+extension CarrierListPageViewModel {
+    var text: String {
+        "\(from.name) -> \(to.name)"
+    }
+    var hasNoCarriers: Bool {
+        carriers.isEmpty
+    }
+    func update() async {
+        isLoading = true
+        do {
+            try await updateCarriers()
+            isLoading = false
+        } catch {
+            onError(error)
+            dismiss()
         }
     }
-    let viewModel: ViewModel
-    @State private var isLoading = false
-    @State private var filterIsShown: Bool = false
+    
+    func updateCarriers() async throws {
+        let service = try SearchService(
+            client: Client(serverURL: Servers.Server1.url(), transport: URLSessionTransport()),
+            apikey: Constant.apiKey
+        )
+        print("from:", from)
+        print("to:", to)
+        let result = try await service.getSearch(
+            from: from.id,
+            to: to.id,
+            date: Date(),
+            transfers: true,
+            offset: nil,
+            limit: nil
+        )
+
+        // TODO: logo
+        // TODO: mock
+        // TODO: filter
+        // TODO: more then 100
+
+        let segments = result.segments ?? []
+        carriers = segments.compactMap { segment in
+            var duration =
+                segment.duration ?? segment.details?.compactMap(\.duration).reduce(0, +) ?? 0
+
+            duration /= 60 * 60
+
+            let departure = (segment.departure ?? "???").prefix(11 + 5).suffix(5)
+            let arrival = (segment.arrival ?? "???").prefix(11 + 5).suffix(5)
+            var comment: String?
+            if let transfers = segment.transfers, !transfers.isEmpty {
+                let stations = transfers.compactMap(\.title).joined(separator: ", ")
+                comment = "С пересадкой (\(stations))"
+            }
+            var dateString = "No Date"
+            if let departureDate = segment.departure,
+                let date = ISO8601DateFormatter().date(from: departureDate)
+            {
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "d MMMM"
+                dateString = dateFormatter.string(from: date)
+            }
+            let id = [segment.departure, segment.arrival]
+                .compactMap { $0 }
+                .joined(separator: " -> ")
+
+            let name =
+                segment.thread?.carrier?.title ?? segment.details?.compactMap(
+                    \.thread?.carrier?.title
+                ).first ?? "No Name 22"
+
+            return CarrierCard.ViewModel(
+                id: id,
+                name: name,
+                comment: comment,
+                date: dateString,
+                departure: String(departure),
+                duration: duration,
+                arrival: String(arrival)
+            )
+        }
+    }
+
+}
+
+struct CarrierListPage: View {
+    @ObservedObject var viewModel: CarrierListPageViewModel
     @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.onError) private var onError
     var body: some View {
         VStack {
-            Text(viewModel.text).b24
-                .padding()
-            if isLoading {
+            Text(viewModel.text).b24.padding()
+            if viewModel.isLoading {
                 Color.clear.overlay { ProgressView() }
-            } else if viewModel.carriers.isEmpty {
+            } else if viewModel.hasNoCarriers {
                 NotFoundView(text: "Вариантов нет")
                     .offset(y: -CustomButton.Constant.height)
             } else {
@@ -123,33 +140,16 @@ struct CarrierListPage: View {
                     CustomButton(
                         text: "Уточнить время",
                         hasDot: viewModel.hasFilter
-                    ) { filterIsShown = true }
+                    ) { viewModel.filterIsShown = true }
                     .padding()
                 }
             }
         }
-        .fullScreenCover(isPresented: $filterIsShown) {
+        .fullScreenCover(isPresented: $viewModel.filterIsShown) {
             CarrierFilterPageWrapper()
                 .environment(\.colorScheme, colorScheme)
         }
-        .task {
-            isLoading = true
-            do {
-                try await viewModel.updateCarriers()
-                isLoading = false
-            } catch {
-                dismiss()
-                guard
-                    let error = error as? ClientError,
-                    error.causeDescription == "Transport threw an error."
-                else {
-                    onError(ErrorKind.server)
-                    return
-                }
-                onError(ErrorKind.internet)
-
-            }
-        }
+        .task { await viewModel.update() }
     }
 }
 
@@ -195,7 +195,9 @@ struct CarrierInfoPageWrapper: View {
         CarrierListPage(
             viewModel: .init(
                 from: .init(id: "s9612140", name: "Ижевск"),
-                to: .init(id: "s2000003", name: "Москва (Казанский вокзал)")
+                to: .init(id: "s2000003", name: "Москва (Казанский вокзал)"),
+                dismiss: {},
+                onError: { print("error:", $0) }
             )
         )
     }

@@ -6,7 +6,7 @@ final class StationSelectorViewModel: ObservableObject {
     @Published var showToCitySelector: Bool
     @Published var from: Station?
     @Published var to: Station?
-    @Published var carriersViewModel: CarrierListPage.ViewModel?
+    @Published var carriersViewModel: CarrierListPageViewModel?
 
     var onError: (Error) -> ()
     
@@ -15,7 +15,7 @@ final class StationSelectorViewModel: ObservableObject {
         showToCitySelector: Bool = false,
         from: Station? = nil,
         to: Station? = nil,
-        carriersViewModel: CarrierListPage.ViewModel? = nil,
+        carriersViewModel: CarrierListPageViewModel? = nil,
         onError: @escaping (Error) -> Void
     ) {
         self.showFromCitySelector = showFromCitySelector
@@ -30,7 +30,11 @@ final class StationSelectorViewModel: ObservableObject {
     func performSearch(from: Station, to: Station) {
         carriersViewModel = .init(
             from: from,
-            to: to
+            to: to,
+            dismiss: { [weak self] in
+                self?.carriersViewModel = nil
+            },
+            onError: onError
         )
     }
 }
