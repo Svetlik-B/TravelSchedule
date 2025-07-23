@@ -89,9 +89,7 @@ struct CitySearchPage: View {
             SearchField(searchText: $viewModel.searchText)
 
             if viewModel.isWaiting {
-                Color.clear.overlay {
-                    ProgressView()
-                }
+                Color.clear.overlay { Loader() }
             } else if viewModel.filteredCities.isEmpty {
                 NotFoundView(text: "Город не найден")
             } else {

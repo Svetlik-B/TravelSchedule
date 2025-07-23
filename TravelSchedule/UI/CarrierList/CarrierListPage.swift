@@ -179,7 +179,7 @@ struct CarrierListPage: View {
         VStack {
             Text(viewModel.text).b24.padding()
             if viewModel.isLoading {
-                Color.clear.overlay { ProgressView() }
+                Color.clear.overlay { Loader() }
             } else if viewModel.hasNoCarriers {
                 NotFoundView(text: "Вариантов нет")
                     .offset(y: -CustomButton.Constant.height)

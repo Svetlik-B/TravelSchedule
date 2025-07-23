@@ -17,6 +17,7 @@ final class CarrierInfoPageViewModel: ObservableObject {
     @Published var name: String?
     @Published var email: String?
     @Published var phone: String?
+    @Published var isLoading: Bool = false
 
     var emailUrl: URL? {
         guard let email else { return nil }
@@ -30,6 +31,8 @@ final class CarrierInfoPageViewModel: ObservableObject {
         guard let code, name == nil
         else { return }
 
+        isLoading = true
+        
         do {
             let service = try CarrierInformationService(
                 client: Client(
@@ -53,6 +56,8 @@ final class CarrierInfoPageViewModel: ObservableObject {
         } catch {
             onError(error)
         }
+        
+        isLoading = false
     }
 }
 
@@ -91,6 +96,11 @@ struct CarrierInfoPage: View {
                 }
             }
             Spacer()
+        }
+        .overlay {
+            if viewModel.isLoading {
+                Loader()
+            }
         }
         .padding(.horizontal)
         .task { await viewModel.update() }
