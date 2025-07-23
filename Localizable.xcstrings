@@ -1,9 +1,6 @@
 {
   "sourceLanguage" : "ru",
   "strings" : {
-    "" : {
-
-    },
     "%lld часов" : {
       "localizations" : {
         "ru" : {

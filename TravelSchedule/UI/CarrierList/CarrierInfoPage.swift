@@ -32,7 +32,7 @@ final class CarrierInfoPageViewModel: ObservableObject {
         else { return }
 
         isLoading = true
-        
+                
         do {
             let service = try CarrierInformationService(
                 client: Client(
@@ -68,11 +68,14 @@ struct CarrierInfoPage: View {
             Spacer()
                 .frame(height: 2)
             if let logo = viewModel.logo {
-                Image(uiImage: logo)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
+                Color.clear
                     .frame(height: 104)
                     .clipShape(RoundedRectangle(cornerRadius: 24))
+                    .overlay {
+                        Image(uiImage: logo)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    }
             } else {
                 Image(uiImage: .checker)
                     .resizable()

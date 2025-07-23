@@ -23,6 +23,8 @@ final class CarrierListPageViewModel: ObservableObject, Identifiable {
     @Published var carriers = [CarrierCardViewModel]()
     @Published var isLoading = false
     @Published var filterIsShown: Bool = false
+    @Published var isCarrierInfoPageShown = false
+    @Published var carrierCodeToShow: Int?
     private var filters: CarrierFilterPageViewModel.Filters = .init()
     private let iso8601DateFormatter = ISO8601DateFormatter()
     private let dateFormatter: DateFormatter = {
@@ -102,7 +104,7 @@ extension CarrierListPageViewModel {
         dismiss()
         onError(error)
     }
-    
+
     func applyFilters(_ newFilters: CarrierFilterPageViewModel.Filters) {
         filters = newFilters
     }
@@ -130,8 +132,6 @@ extension CarrierListPageViewModel {
             limit: result.pagination?.total
         )
 
-        // TODO: logo
-
         let segments = result.segments ?? []
         carriers = segments.compactMap { segment in
             var duration =
@@ -153,11 +153,11 @@ extension CarrierListPageViewModel {
                 dateString = dateFormatter.string(from: date)
             }
             let code =
-                segment.thread?.carrier?.code ?? segment.details?.compactMap(
+                segment.thread?.carrier?.code
+                ?? segment.details?.compactMap(
                     \.thread?.carrier?.code
                 ).first
 
-            
             return CarrierCardViewModel(
                 code: code,
                 comment: comment,
@@ -169,7 +169,10 @@ extension CarrierListPageViewModel {
             )
         }
     }
-
+    func showCarrierInfoPage(carrier: CarrierCardViewModel) {
+        carrierCodeToShow = carrier.code
+        isCarrierInfoPageShown = true
+    }
 }
 
 struct CarrierListPage: View {
@@ -197,14 +200,7 @@ struct CarrierListPage: View {
                     ForEach(viewModel.filteredCarriers) { carrier in
                         CarrierCard(viewModel: carrier)
                             .listRowBackground(Color.clear)
-                            .background {
-                                NavigationLink("") {
-                                    CarrierInfoPageWrapper(
-                                        code: carrier.code,
-                                        onError: viewModel.dismissOnError
-                                    )
-                                }
-                            }
+                            .onTapGesture { viewModel.showCarrierInfoPage(carrier: carrier) }
                     }
                     Spacer().frame(height: CustomButton.Constant.height)
                 }
@@ -224,6 +220,12 @@ struct CarrierListPage: View {
                 viewModel.applyFilters(filters)
             }
             .environment(\.colorScheme, colorScheme)
+        }
+        .fullScreenCover(isPresented: $viewModel.isCarrierInfoPageShown) {
+            CarrierInfoPageWrapper(
+                code: viewModel.carrierCodeToShow,
+                onError: viewModel.dismissOnError
+            )
         }
         .task { await viewModel.update() }
     }
@@ -251,11 +253,15 @@ struct CarrierInfoPageWrapper: View {
     var onError: (Error) -> Void
     @Environment(\.dismiss) private var dismiss
     var body: some View {
-        CarrierInfoPage(viewModel: CarrierInfoPageViewModel(code: code, onError: onError))
+        NavigationStack {
+            CarrierInfoPage(
+                viewModel: CarrierInfoPageViewModel(code: code, onError: onError)
+            )
             .customNavigationBar(
                 title: "Информация о перевозчике",
                 action: { dismiss() }
             )
+        }
     }
 }
 
