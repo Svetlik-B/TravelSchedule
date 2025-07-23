@@ -125,7 +125,7 @@ struct CitySearchPage: View {
             viewModel: .init(
                 cityLoader: .mock,
                 dismiss: {},
-                onError: { print($0) },
+                onError: { print("error:", $0) },
                 onStationSelected: { city, station in
                     print(
                         """

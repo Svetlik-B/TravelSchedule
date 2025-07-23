@@ -1,74 +1,112 @@
 import Observation
+import OpenAPIURLSession
 import SwiftUI
 
-struct CarrierInfoPage: View {
-    @Observable
-    final class ViewModel {
-        var logo: UIImage?
-        var name: String
-        var email: String?
-        var phone: String?
-        init(logo: UIImage? = nil, name: String, email: String?, phone: String?) {
-            self.logo = logo
-            self.name = name
-            self.email = email
-            self.phone = phone
-        }
-        
-        var emailUrl: URL? {
-            guard let email else { return nil }
-            return URL(string: "mailto://\(email)")
-        }
-        var phoneUrl: URL? {
-            guard let phone else { return nil }
-            return URL(string: "tel://\(phone)")
+@MainActor
+final class CarrierInfoPageViewModel: ObservableObject {
+    let code: Int?
+    let onError: (Error) -> Void
+    init(
+        code: Int?,
+        onError: @escaping (Error) -> Void
+    ) {
+        self.code = code
+        self.onError = onError
+    }
+    @Published var logo: UIImage?
+    @Published var name: String?
+    @Published var email: String?
+    @Published var phone: String?
+
+    var emailUrl: URL? {
+        guard let email else { return nil }
+        return URL(string: "mailto://\(email)")
+    }
+    var phoneUrl: URL? {
+        guard let phone else { return nil }
+        return URL(string: "tel://\(phone)")
+    }
+    func update() async {
+        guard let code, name == nil
+        else { return }
+
+        do {
+            let service = try CarrierInformationService(
+                client: Client(
+                    serverURL: Servers.Server1.url(),
+                    transport: URLSessionTransport()
+                ),
+                apikey: Constant.apiKey
+            )
+            let result = try await service.getCarrierInformation(code: "\(code)")
+            name = result.carrier?.title
+            email = result.carrier?.email
+            phone = result.carrier?.phone
+
+            if
+                let logoURl = result.carrier?.logo,
+                let url = URL(string: logoURl)
+            {
+                let (data, _) = try await URLSession.shared.data(from: url)
+                logo = UIImage(data: data)
+            }
+        } catch {
+            onError(error)
         }
     }
-    var viewModel: ViewModel
+}
+
+struct CarrierInfoPage: View {
+    @ObservedObject var viewModel: CarrierInfoPageViewModel
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Spacer()
                 .frame(height: 2)
-            Image(uiImage: .checker)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(height: 104)
-                .clipShape(RoundedRectangle(cornerRadius: 24))
+            if let logo = viewModel.logo {
+                Image(uiImage: logo)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 104)
+                    .clipShape(RoundedRectangle(cornerRadius: 24))
+            } else {
+                Image(uiImage: .checker)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(height: 104)
+                    .clipShape(RoundedRectangle(cornerRadius: 24))
+            }
             VStack(alignment: .leading, spacing: 16) {
-                Text(viewModel.name).b24
+                Text(viewModel.name ?? "").b24
                 VStack(alignment: .leading, spacing: 0) {
-                    if let email = viewModel.email {
-                        Contact(
-                            title: "E-mail",
-                            text: email,
-                            url: viewModel.emailUrl
-                        )
-                    }
-                    if let phone = viewModel.phone {
-                        Contact(
-                            title: "Телефон",
-                            text: phone,
-                            url: viewModel.phoneUrl
-                        )
-                    }
+                    Contact(
+                        title: "E-mail",
+                        text: viewModel.email,
+                        url: viewModel.emailUrl
+                    )
+                    Contact(
+                        title: "Телефон",
+                        text: viewModel.phone,
+                        url: viewModel.phoneUrl
+                    )
                 }
             }
             Spacer()
         }
         .padding(.horizontal)
+        .task { await viewModel.update() }
     }
-    
+
     struct Contact: View {
         var title: String
-        var text: String
+        var text: String?
         var url: URL?
         var body: some View {
             VStack(alignment: .leading, spacing: -2) {
                 Text(title).r17
                 if let url {
-                    Link(text, destination: url).r12
+                    Link(text ?? "", destination: url).r12
                 } else {
-                    Text(text).r12
+                    Text(text ?? "").r12
                 }
             }
             .frame(height: 60)
@@ -76,21 +114,26 @@ struct CarrierInfoPage: View {
     }
 }
 
-
-
-#Preview {
+#Preview("Таврия") {
     NavigationStack {
-        let viewModel: CarrierInfoPage.ViewModel = {
-            let viewModel = CarrierInfoPage.ViewModel.init(
-                logo: nil,
-                name: "ОАО «РЖД»",
-                email: "I.Lozgkina@yandex.ru",
-                phone: "+7 (904) 329-27-71"
-            )
-            return viewModel
-        }()
-        CarrierInfoPage(viewModel: viewModel)
-            .navigationTitle("Информация о перевозчике")
-            .navigationBarTitleDisplayMode(.inline)
+        CarrierInfoPage(
+            viewModel: CarrierInfoPageViewModel(code: 63438) {
+                print("error:", $0)
+            }
+        )
+        .navigationTitle("Информация о перевозчике")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+#Preview("РЖД") {
+    NavigationStack {
+        CarrierInfoPage(
+            viewModel: CarrierInfoPageViewModel(code: 112) {
+                print("error:", $0)
+            }
+        )
+        .navigationTitle("Информация о перевозчике")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

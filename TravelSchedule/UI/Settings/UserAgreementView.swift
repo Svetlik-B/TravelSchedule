@@ -2,8 +2,8 @@ import SwiftUI
 import WebKit
 
 struct UserAgreementView: View {
+    let onError: (Error) -> Void
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.onError) private var onError
     var body: some View {
         SwiftWebView {
             dismiss()
@@ -13,17 +13,17 @@ struct UserAgreementView: View {
 }
 
 private struct SwiftWebView: UIViewRepresentable {
-    var onError: (ErrorKind) -> Void = { _ in }
+    var onError: (Error) -> Void = { _ in }
     class Coordinator: NSObject, WKNavigationDelegate {
         var parent: SwiftWebView
         init(parent: SwiftWebView) {
             self.parent = parent
         }
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-            parent.onError(.server)
+            parent.onError(error)
         }
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: any Error) {
-            parent.onError(.internet)
+            parent.onError(error)
         }
     }
     func makeCoordinator() -> Coordinator {
@@ -41,5 +41,7 @@ private struct SwiftWebView: UIViewRepresentable {
 }
 
 #Preview {
-    UserAgreementView()
+    UserAgreementView {
+        print("error:", $0)
+    }
 }

@@ -94,11 +94,15 @@ extension CarrierListPageViewModel {
             try await updateCarriers()
             isLoading = false
         } catch {
-            onError(error)
-            dismiss()
+            dismissOnError(error)
         }
     }
 
+    func dismissOnError(_ error: Error) {
+        dismiss()
+        onError(error)
+    }
+    
     func applyFilters(_ newFilters: CarrierFilterPageViewModel.Filters) {
         filters = newFilters
     }
@@ -148,11 +152,6 @@ extension CarrierListPageViewModel {
             {
                 dateString = dateFormatter.string(from: date)
             }
-            let name =
-                segment.thread?.carrier?.title ?? segment.details?.compactMap(
-                    \.thread?.carrier?.title
-                ).first ?? "No Name"
-            
             let code =
                 segment.thread?.carrier?.code ?? segment.details?.compactMap(
                     \.thread?.carrier?.code
@@ -161,7 +160,6 @@ extension CarrierListPageViewModel {
             
             return CarrierCardViewModel(
                 code: code,
-                name: name,
                 comment: comment,
                 date: dateString,
                 departure: String(departure ?? ""),
@@ -201,7 +199,10 @@ struct CarrierListPage: View {
                             .listRowBackground(Color.clear)
                             .background {
                                 NavigationLink("") {
-                                    CarrierInfoPageWrapper()
+                                    CarrierInfoPageWrapper(
+                                        code: carrier.code,
+                                        onError: viewModel.dismissOnError
+                                    )
                                 }
                             }
                     }
@@ -246,18 +247,11 @@ struct CarrierFilterPageWrapper: View {
 }
 
 struct CarrierInfoPageWrapper: View {
+    var code: Int?
+    var onError: (Error) -> Void
     @Environment(\.dismiss) private var dismiss
     var body: some View {
-        let viewModel: CarrierInfoPage.ViewModel = {
-            let viewModel = CarrierInfoPage.ViewModel.init(
-                logo: nil,
-                name: "ОАО «РЖД»",
-                email: "I.Lozgkina@yandex.ru",
-                phone: "+7 (904) 329-27-71"
-            )
-            return viewModel
-        }()
-        CarrierInfoPage(viewModel: viewModel)
+        CarrierInfoPage(viewModel: CarrierInfoPageViewModel(code: code, onError: onError))
             .customNavigationBar(
                 title: "Информация о перевозчике",
                 action: { dismiss() }

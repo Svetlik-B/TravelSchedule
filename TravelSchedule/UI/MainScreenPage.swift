@@ -18,6 +18,9 @@ final class MainScreenPageViewModel: ObservableObject {
         self.settings.setColorScheme = { [weak self] in
             self?.colorScheme = $0
         }
+        self.settings.onError = { [weak self] error in
+            self?.onError(error)
+        }
     }
 
     enum PageTab { case search, settings }
@@ -35,19 +38,24 @@ final class MainScreenPageViewModel: ObservableObject {
     @Published var settings: SettingsPageViewModel
 
     func onError(_ error: Error) {
-        // убрать все popups
-        if let error = error as? ClientError {
-            let underlyingError = error.underlyingError as NSError
-            if underlyingError.code == -999 {
-                print("Cancelled by user")
-                return
-            }
-            showError = .server
-            currentTab = .settings
-            return
-        }
         print("Got error:", error)
-        showError = .internet
+        var errorKind = ErrorKind.internet
+        if let error = error as? ClientError {
+            errorKind = .server
+            let underlyingError = error.underlyingError as NSError
+            if underlyingError.domain == NSURLErrorDomain,
+                underlyingError.code == NSURLErrorNotConnectedToInternet
+            {
+                errorKind = .internet
+            }
+        }
+        let error = error as NSError
+        print("NSError:")
+        print(error.domain, error.code)
+        if error.domain == "OpenAPIRuntime.RuntimeError" {
+            errorKind = .server
+        }
+        showError = errorKind
         currentTab = .settings
     }
 }
@@ -87,19 +95,12 @@ struct MainScreenPage: View {
         }
         .tint(.primary)
         .environment(\.colorScheme, viewModel.colorScheme)
-        .environment(\.onError, viewModel.onError)
     }
 }
 
 enum ErrorKind: Error {
     case internet
     case server
-}
-
-extension EnvironmentValues {
-    @Entry var onError: (Error) -> Void = {
-        print("Error: \($0)")
-    }
 }
 
 extension UIScreen {

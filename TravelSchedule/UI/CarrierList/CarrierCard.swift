@@ -6,7 +6,6 @@ final class CarrierCardViewModel: Identifiable, ObservableObject {
     init(
         code: Int? = nil,
         logo: UIImage? = nil,
-        name: String,
         comment: String? = nil,
         date: String,
         departure: String,
@@ -16,7 +15,6 @@ final class CarrierCardViewModel: Identifiable, ObservableObject {
     ) {
         self.code = code
         self.logo = logo
-        self.name = name
         self.comment = comment
         self.date = date
         self.departure = departure
@@ -27,7 +25,7 @@ final class CarrierCardViewModel: Identifiable, ObservableObject {
     let onError: (Error) -> Void
     @Published var code: Int?
     @Published var logo: UIImage?
-    @Published var name: String
+    @Published var name: String?
     @Published var comment: String?
     @Published var date: String
     @Published var departure: String
@@ -36,7 +34,7 @@ final class CarrierCardViewModel: Identifiable, ObservableObject {
 
     func updateLogo() async {
         guard
-            logo == nil,
+            name == nil,
             let code
         else { return }
 
@@ -49,19 +47,18 @@ final class CarrierCardViewModel: Identifiable, ObservableObject {
                 apikey: Constant.apiKey
             )
             let result = try await service.getCarrierInformation(code: "\(code)")
+            name = result.carrier?.title
             
-            guard
+            if
                 let logoURl = result.carrier?.logo,
                 let url = URL(string: logoURl)
-            else { return }
-            
-            let (data, _) = try await URLSession.shared.data(from: url)
-            logo = UIImage(data: data)
-
+            {
+                let (data, _) = try await URLSession.shared.data(from: url)
+                logo = UIImage(data: data)
+            }
         } catch {
             onError(error)
         }
-
     }
 }
 
@@ -77,9 +74,11 @@ struct CarrierCard: View {
                     .frame(width: 38, height: 38)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 VStack(alignment: .leading) {
-                    Text(viewModel.name).r17
-                    Text(viewModel.comment ?? "").r12
-                        .foregroundStyle(Color.Colors.redUniversal)
+                    Text(viewModel.name ?? "").r17.padding(.trailing, 40)
+                    if let comment = viewModel.comment {
+                        Text(comment).r12
+                            .foregroundStyle(Color.Colors.redUniversal)
+                    }
                 }
                 Spacer()
             }
@@ -121,7 +120,7 @@ struct CarrierCard: View {
 extension CarrierCardViewModel {
     static let rzd = CarrierCardViewModel(
         logo: .rzd,
-        name: "РЖД",
+//        name: "РЖД и еще что-то очень длинное",
         comment: "С пересадкой в Костроме",
         date: "14 января",
         departure: "22:30",
@@ -131,8 +130,8 @@ extension CarrierCardViewModel {
     )
     static let fgk = CarrierCardViewModel(
         logo: .fgk,
-        name: "ФГК",
-        comment: nil,
+//        name: "ФГК",
+        comment: "test",
         date: "15 января",
         departure: "01:15",
         duration: 22,
@@ -141,7 +140,7 @@ extension CarrierCardViewModel {
     )
     static let ural = CarrierCardViewModel(
         logo: .ural,
-        name: "Урал логистика",
+//        name: "Урал логистика",
         comment: nil,
         date: "16 января",
         departure: "12:30",
