@@ -1,16 +1,16 @@
 import SwiftUI
 
-@Observable
-final class StoryPageViewModel: Identifiable {
+@MainActor
+final class StoryPageViewModel: Identifiable, ObservableObject {
     init(items: [StoryItemViewViewModel], duration: Double = 5) {
         self.items = items
         self.duration = duration
         self.animation = Animation.linear(duration: duration)
     }
-    var isDone = false
+    @Published var isDone = false
+    @Published private(set) var currentItem: Int = 0
     private let duration: Double
     private let animation: Animation
-    private(set) var currentItem: Int = 0
     private var items: [StoryItemViewViewModel]
     private func nextItem() {
         items[currentItem].progress.isCompleted = false
@@ -59,7 +59,7 @@ final class StoryPageViewModel: Identifiable {
 
 
 struct StoryPage: View {
-    var viewModel: StoryPageViewModel
+    @ObservedObject var viewModel: StoryPageViewModel
     @Environment(\.dismiss) private var dismiss
     var body: some View {
         VStack {
@@ -89,7 +89,7 @@ struct StoryPage: View {
 
 
 // MARK: Preview
-
+@MainActor
 private func createItems(id: Int) -> [StoryItemViewViewModel] {
     (id...9).flatMap { id in
         [

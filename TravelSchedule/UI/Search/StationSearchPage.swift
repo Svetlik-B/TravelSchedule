@@ -1,9 +1,14 @@
 import SwiftUI
 
-struct StationSearchPage: View {
-    var city: City
-    var action: (Station) -> Void
-    @State private var searchText = ""
+@MainActor
+final class StationSearchPageViewModel: ObservableObject {
+    private var city: City
+    private var action: (Station) -> Void
+    init(city: City, action: @escaping (Station) -> Void) {
+        self.city = city
+        self.action = action
+    }
+    @Published var searchText = ""
     private var filteredItems: [Station] {
         guard !searchText.isEmpty else {
             return city.stations
@@ -12,20 +17,27 @@ struct StationSearchPage: View {
             item.name.localizedCaseInsensitiveContains(searchText)
         }
     }
+    var noStationsFound: Bool { filteredItems.isEmpty }
+    var items: [ItemList.Item] {
+        filteredItems.map { ItemList.Item(id: $0.id, name: $0.name) }
+    }
+    func onSelect(item: ItemList.Item) {
+        let station = Station(id: item.id, name: item.name)
+        action(station)
+    }
+}
+
+struct StationSearchPage: View {
+    @ObservedObject var viewModel: StationSearchPageViewModel
     var body: some View {
         VStack {
             Spacer()
-            SearchField(searchText: $searchText)
+            SearchField(searchText: $viewModel.searchText)
 
-            if filteredItems.isEmpty {
+            if viewModel.noStationsFound {
                 NotFoundView(text: "Станция не найдена")
             } else {
-                let items = filteredItems
-                    .map { ItemList.Item(id: $0.id, name: $0.name) }
-                ItemList(items: items) { item in
-                    let station = Station(id: item.id, name: item.name)
-                    action(station)
-                }
+                ItemList(items: viewModel.items) { viewModel.onSelect(item: $0) }
             }
         }
     }
@@ -34,19 +46,21 @@ struct StationSearchPage: View {
 #Preview {
     NavigationStack {
         StationSearchPage(
-            city: .init(
-                id: "1",
-                name: "Москва",
-                stations: [
-                    .init(id: "1", name: "Киевский вокзал"),
-                    .init(id: "2", name: "Курский вокзал"),
-                    .init(id: "3", name: "Ярославский вокзал"),
-                    .init(id: "4", name: "Белорусский вокзал"),
-                    .init(id: "5", name: "Савёловский вокзал"),
-                    .init(id: "6", name: "Ленинградский вокзал"),
-                ]
-            )
-        ) { print("station: \($0.name)") }
+            viewModel: .init(
+                city: .init(
+                    id: "1",
+                    name: "Москва",
+                    stations: [
+                        .init(id: "1", name: "Киевский вокзал"),
+                        .init(id: "2", name: "Курский вокзал"),
+                        .init(id: "3", name: "Ярославский вокзал"),
+                        .init(id: "4", name: "Белорусский вокзал"),
+                        .init(id: "5", name: "Савёловский вокзал"),
+                        .init(id: "6", name: "Ленинградский вокзал"),
+                    ]
+                )
+            ) { print("station: \($0.name)") }
+        )
         .navigationTitle("Выбор станции")
         .navigationBarTitleDisplayMode(.inline)
     }

@@ -14,7 +14,7 @@ protocol SearchProtocol {
     ) async throws -> Search
 }
 
-final class SearchService: SearchProtocol {
+actor SearchService: SearchProtocol {
     private let client: Client
     private let apikey: String
 

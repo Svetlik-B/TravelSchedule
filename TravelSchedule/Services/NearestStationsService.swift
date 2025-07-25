@@ -11,7 +11,7 @@ protocol NearestStationsServiceProtocol {
     ) async throws -> NearestStations
 }
 
-final class NearestStationsService: NearestStationsServiceProtocol {
+actor NearestStationsService: NearestStationsServiceProtocol {
     private let client: Client
     private let apikey: String
         

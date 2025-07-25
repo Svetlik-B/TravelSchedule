@@ -1,24 +1,63 @@
 import SwiftUI
 
+@MainActor
+final class StationSelectorViewModel: ObservableObject {
+    @Published var showFromCitySelector: Bool
+    @Published var showToCitySelector: Bool
+    @Published var from: Station?
+    @Published var to: Station?
+    @Published var carriersViewModel: CarrierListPageViewModel?
+
+    var onError: (Error) -> ()
+    
+    init(
+        showFromCitySelector: Bool = false,
+        showToCitySelector: Bool = false,
+        from: Station? = nil,
+        to: Station? = nil,
+        carriersViewModel: CarrierListPageViewModel? = nil,
+        onError: @escaping (Error) -> Void
+    ) {
+        self.showFromCitySelector = showFromCitySelector
+        self.showToCitySelector = showToCitySelector
+        self.from = from
+        self.to = to
+        self.carriersViewModel = carriersViewModel
+        self.onError = onError
+    }
+    
+    func toggleDirection() { (from, to) = (to, from) }
+    func performSearch(from: Station, to: Station) {
+        carriersViewModel = .init(
+            from: from,
+            to: to,
+            dismiss: { [weak self] in
+                self?.carriersViewModel = nil
+            },
+            onError: onError
+        )
+    }
+}
+
 struct StationSelector: View {
-    @State private var showFromCitySelector: Bool = false
-    @State private var showToCitySelector: Bool = false
-    @State private var carriersViewModel: CarrierListPage.ViewModel?
-    @State private var from: Station?
-    @State private var to: Station?
+    @ObservedObject var viewModel: StationSelectorViewModel
     @Environment(\.colorScheme) private var colorScheme
     var body: some View {
         VStack(spacing: 16) {
             HStack(spacing: 18) {
                 VStack(spacing: 26) {
-                    DirectionButton(text: from?.name, prompt: "Откуда") { showFromCitySelector = true }
-                    DirectionButton(text: to?.name, prompt: "Куда") { showToCitySelector = true }
+                    DirectionButton(text: viewModel.from?.name, prompt: "Откуда") {
+                        viewModel.showFromCitySelector = true
+                    }
+                    DirectionButton(text: viewModel.to?.name, prompt: "Куда") {
+                        viewModel.showToCitySelector = true
+                    }
                 }
                 .padding()
                 .background(Color.white)
                 .cornerRadius(16)
                 Button {
-                    (from, to) = (to, from)
+                    viewModel.toggleDirection()
                 } label: {
                     Image(uiImage: .сhange)
                         .padding(5)
@@ -31,46 +70,49 @@ struct StationSelector: View {
             .cornerRadius(16)
             .padding(.horizontal)
 
-            if let from, let to {
+            if let from = viewModel.from, let to = viewModel.to {
                 CustomButton(text: "Найти", hasDot: false) {
-                    carriersViewModel = .init(
-                        from: from,
-                        to: to
-                    )
+                    viewModel.performSearch(from: from, to: to)
                 }
                 .frame(width: 150)
             }
         }
-        .fullScreenCover(item: $carriersViewModel) { viewModel in
+        .fullScreenCover(item: $viewModel.carriersViewModel) { carriersViewModel in
             NavigationStack {
-                CarrierListPage( viewModel: viewModel)
-                .customNavigationBar(title: "") { carriersViewModel = nil }
+                CarrierListPage(viewModel: carriersViewModel)
+                    .customNavigationBar(title: "") { viewModel.carriersViewModel = nil }
             }
             .environment(\.colorScheme, colorScheme)
         }
-        .fullScreenCover(isPresented: $showFromCitySelector) {
-            CitySelectionModal(
-                direction: $from,
-                showCitySelector: $showFromCitySelector
+        .fullScreenCover(isPresented: $viewModel.showFromCitySelector) {
+            CitySelectionView(
+                direction: $viewModel.from,
+                showCitySelector: $viewModel.showFromCitySelector,
+                onError: viewModel.onError
             )
             .environment(\.colorScheme, colorScheme)
         }
-        .fullScreenCover(isPresented: $showToCitySelector) {
-            CitySelectionModal(
-                direction: $to,
-                showCitySelector: $showToCitySelector
+        .fullScreenCover(isPresented: $viewModel.showToCitySelector) {
+            CitySelectionView(
+                direction: $viewModel.to,
+                showCitySelector: $viewModel.showToCitySelector,
+                onError: viewModel.onError
             )
             .environment(\.colorScheme, colorScheme)
         }
     }
-    
-    struct CitySelectionModal: View {
+
+    struct CitySelectionView: View {
         @Binding var direction: Station?
         @Binding var showCitySelector: Bool
+        var onError: (Error) -> Void
         var body: some View {
             NavigationStack {
                 CitySearchPage(
                     viewModel: .init(
+                        cityLoader: .live,
+                        dismiss: { showCitySelector = false },
+                        onError: onError,
                         onStationSelected: { city, station in
                             direction = station
                             showCitySelector = false
@@ -102,5 +144,7 @@ struct StationSelector: View {
 }
 
 #Preview {
-    StationSelector()
+    StationSelector(
+        viewModel: .init { print("error:", $0) }
+    )
 }

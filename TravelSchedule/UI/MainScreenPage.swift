@@ -1,7 +1,8 @@
+import OpenAPIRuntime
 import SwiftUI
 
-@Observable
-final class MainScreenPageViewModel {
+@MainActor
+final class MainScreenPageViewModel: ObservableObject {
     init(
         colorScheme: ColorScheme = UIScreen.colorScheme,
         currentTab: PageTab = PageTab.search,
@@ -17,35 +18,54 @@ final class MainScreenPageViewModel {
         self.settings.setColorScheme = { [weak self] in
             self?.colorScheme = $0
         }
+        self.settings.onError = { [weak self] error in
+            self?.onError(error)
+        }
     }
 
     enum PageTab { case search, settings }
 
-    var colorScheme: ColorScheme
-    var currentTab = PageTab.search {
+    @Published var colorScheme: ColorScheme
+    @Published var currentTab = PageTab.search {
         didSet {
             if currentTab == .search {
                 showError = nil
             }
         }
     }
-    var showError: ErrorKind?
+    @Published var showError: ErrorKind?
 
-    var settings: SettingsPageViewModel
+    @Published var settings: SettingsPageViewModel
 
-    func onError(_ error: ErrorKind) {
-        // убрать все popups
-        showError = error
+    func onError(_ error: Error) {
+        print("Got error:", error)
+        var errorKind = ErrorKind.internet
+        if let error = error as? ClientError {
+            errorKind = .server
+            let underlyingError = error.underlyingError as NSError
+            if underlyingError.domain == NSURLErrorDomain,
+                underlyingError.code == NSURLErrorNotConnectedToInternet
+            {
+                errorKind = .internet
+            }
+        }
+        let error = error as NSError
+        print("NSError:")
+        print(error.domain, error.code)
+        if error.domain == "OpenAPIRuntime.RuntimeError" {
+            errorKind = .server
+        }
+        showError = errorKind
         currentTab = .settings
     }
 }
 
 struct MainScreenPage: View {
-    @Bindable var viewModel = MainScreenPageViewModel()
+    @ObservedObject var viewModel = MainScreenPageViewModel()
     var body: some View {
         TabView(selection: $viewModel.currentTab) {
             VStack {
-                StationSelectionPage()
+                StationSelectionPage(onError: viewModel.onError)
                 Spacer()
                 Divider()
             }
@@ -75,19 +95,12 @@ struct MainScreenPage: View {
         }
         .tint(.primary)
         .environment(\.colorScheme, viewModel.colorScheme)
-        .environment(\.onError, viewModel.onError)
     }
 }
 
-enum ErrorKind {
+enum ErrorKind: Error {
     case internet
     case server
-}
-
-extension EnvironmentValues {
-    @Entry var onError: (ErrorKind) -> Void = {
-        print("ErrorKind: \($0)")
-    }
 }
 
 extension UIScreen {

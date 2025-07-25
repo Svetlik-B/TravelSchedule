@@ -1,118 +1,206 @@
-import OpenAPIURLSession
 import OpenAPIRuntime
+import OpenAPIURLSession
 import SwiftUI
 
-struct CarrierListPage: View {
-    @Observable
-    final class ViewModel: Identifiable {
-        var id: String { from.id + "-" + to.id }
-        var from: Station
-        var to: Station
-        var carriers = [CarrierCard.ViewModel]()
-        var hasFilter = false
+@MainActor
+final class CarrierListPageViewModel: ObservableObject, Identifiable {
+    let from: Station
+    let to: Station
+    let dismiss: () -> Void
+    let onError: (Error) -> Void
+    init(
+        from: Station,
+        to: Station,
+        dismiss: @escaping () -> Void,
+        onError: @escaping (Error) -> Void
+    ) {
+        self.from = from
+        self.to = to
+        self.dismiss = dismiss
+        self.onError = onError
+    }
 
-        func updateCarriers() async throws {
-            let service = try SearchService(
-                client: Client(serverURL: Servers.Server1.url(), transport: URLSessionTransport()),
-                apikey: Constant.apiKey
-            )
-            print("from:", from)
-            print("to:", to)
-            let result = try await service.getSearch(
-                from: from.id,
-                to: to.id,
-                date: Date(),
-                transfers: true,
-                offset: nil,
-                limit: nil
-            )
+    @Published var carriers = [CarrierCardViewModel]()
+    @Published var isLoading = false
+    @Published var filterIsShown: Bool = false
+    @Published var isCarrierInfoPageShown = false
+    @Published var carrierCodeToShow: Int?
+    private var filters: CarrierFilterPageViewModel.Filters = .init()
+    private let iso8601DateFormatter = ISO8601DateFormatter()
+    private let dateFormatter: DateFormatter = {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "d MMMM"
+        return dateFormatter
+    }()
+}
 
-            // TODO: logo
-            // TODO: mock
-            // TODO: filter
-            // TODO: more then 100
+extension CarrierListPageViewModel {
+    var filteredCarriers: [CarrierCardViewModel] {
+        carriers.filter { carrier in
+            guard hasFilter
+            else { return true }
 
-            let segments = result.segments ?? []
-            carriers = segments.compactMap { segment in
-                var duration =
-                    segment.duration ?? segment.details?.compactMap(\.duration).reduce(0, +) ?? 0
-
-                duration /= 60 * 60
-
-                let departure = (segment.departure ?? "???").prefix(11 + 5).suffix(5)
-                let arrival = (segment.arrival ?? "???").prefix(11 + 5).suffix(5)
-                var comment: String?
-                if let transfers = segment.transfers, !transfers.isEmpty {
-                    let stations = transfers.compactMap(\.title).joined(separator: ", ")
-                    comment = "С пересадкой (\(stations))"
-                }
-                var dateString = "No Date"
-                if let departureDate = segment.departure,
-                    let date = ISO8601DateFormatter().date(from: departureDate)
-                {
-                    let dateFormatter = DateFormatter()
-                    dateFormatter.dateFormat = "d MMMM"
-                    dateString = dateFormatter.string(from: date)
-                }
-                let id = [segment.departure, segment.arrival]
-                    .compactMap { $0 }
-                    .joined(separator: " -> ")
-
-                let name =
-                    segment.thread?.carrier?.title ?? segment.details?.compactMap(
-                        \.thread?.carrier?.title
-                    ).first ?? "No Name 22"
-
-                return CarrierCard.ViewModel(
-                    id: id,
-                    name: name,
-                    comment: comment,
-                    date: dateString,
-                    departure: String(departure),
-                    duration: duration,
-                    arrival: String(arrival)
-                )
+            if filters.showWithTransfers == false && carrier.comment != nil {
+                return false
             }
 
-        }
+            if !filters.showMorning
+                && !filters.showDay
+                && !filters.showEvening
+                && !filters.showNight
+            {
+                return true
+            }
 
-        var text: String {
-            "\(from.name) -> \(to.name)"
-        }
+            guard
+                let departureHourString = carrier.departure.split(separator: ":").first,
+                let departureHour = Int(departureHourString)
+            else { return true }
 
-        init(
-            from: Station,
-            to: Station
-        ) {
-            self.from = from
-            self.to = to
+            if filters.showMorning && departureHour >= 6 && departureHour < 12 {
+                return true
+            }
+            if filters.showDay && departureHour >= 12 && departureHour < 18 {
+                return true
+            }
+            if filters.showEvening && departureHour >= 18 {
+                return true
+            }
+            if filters.showNight && departureHour < 6 {
+                return true
+            }
+            return false
         }
     }
-    let viewModel: ViewModel
-    @State private var isLoading = false
-    @State private var filterIsShown: Bool = false
+    func showFilters() {
+        filters = .init()
+        filterIsShown = true
+    }
+    var hasFilter: Bool {
+        filters.showMorning
+            || filters.showDay
+            || filters.showEvening
+            || filters.showNight
+            || filters.showWithTransfers != nil
+    }
+
+    var text: String {
+        "\(from.name) -> \(to.name)"
+    }
+    var hasNoCarriers: Bool {
+        filteredCarriers.isEmpty
+    }
+    func update() async {
+        isLoading = true
+        do {
+            try await updateCarriers()
+            isLoading = false
+        } catch {
+            dismissOnError(error)
+        }
+    }
+
+    func dismissOnError(_ error: Error) {
+        dismiss()
+        onError(error)
+    }
+
+    func applyFilters(_ newFilters: CarrierFilterPageViewModel.Filters) {
+        filters = newFilters
+    }
+
+    func updateCarriers() async throws {
+        let service = try SearchService(
+            client: Client(serverURL: Servers.Server1.url(), transport: URLSessionTransport()),
+            apikey: Constant.apiKey
+        )
+        var result = try await service.getSearch(
+            from: from.id,
+            to: to.id,
+            date: Date(),
+            transfers: true,
+            offset: nil,
+            limit: 1
+        )
+
+        result = try await service.getSearch(
+            from: from.id,
+            to: to.id,
+            date: Date(),
+            transfers: true,
+            offset: nil,
+            limit: result.pagination?.total
+        )
+
+        let segments = result.segments ?? []
+        carriers = segments.compactMap { segment in
+            var duration =
+                segment.duration ?? segment.details?.compactMap(\.duration).reduce(0, +) ?? 0
+
+            duration /= 60 * 60
+
+            let departure = segment.departure?.prefix(11 + 5).suffix(5)
+            let arrival = segment.arrival?.prefix(11 + 5).suffix(5)
+            var comment: String?
+            if let transfers = segment.transfers, !transfers.isEmpty {
+                let stations = transfers.compactMap(\.title).joined(separator: ", ")
+                comment = "С пересадкой (\(stations))"
+            }
+            var dateString = "No Date"
+            if let departureDate = segment.departure,
+                let date = iso8601DateFormatter.date(from: departureDate)
+            {
+                dateString = dateFormatter.string(from: date)
+            }
+            let code =
+                segment.thread?.carrier?.code
+                ?? segment.details?.compactMap(
+                    \.thread?.carrier?.code
+                ).first
+
+            return CarrierCardViewModel(
+                code: code,
+                comment: comment,
+                date: dateString,
+                departure: String(departure ?? ""),
+                duration: duration,
+                arrival: String(arrival ?? ""),
+                onError: onError
+            )
+        }
+    }
+    func showCarrierInfoPage(carrier: CarrierCardViewModel) {
+        carrierCodeToShow = carrier.code
+        isCarrierInfoPageShown = true
+    }
+}
+
+struct CarrierListPage: View {
+    @ObservedObject var viewModel: CarrierListPageViewModel
     @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.onError) private var onError
     var body: some View {
         VStack {
-            Text(viewModel.text).b24
-                .padding()
-            if isLoading {
-                Color.clear.overlay { ProgressView() }
-            } else if viewModel.carriers.isEmpty {
+            Text(viewModel.text).b24.padding()
+            if viewModel.isLoading {
+                Color.clear.overlay { Loader() }
+            } else if viewModel.hasNoCarriers {
                 NotFoundView(text: "Вариантов нет")
                     .offset(y: -CustomButton.Constant.height)
+                    .overlay(alignment: .bottom) {
+                        if viewModel.hasFilter {
+                            CustomButton(
+                                text: "Уточнить время",
+                                hasDot: viewModel.hasFilter
+                            ) { viewModel.showFilters() }
+                            .padding()
+                        }
+                    }
             } else {
                 List {
-                    ForEach(viewModel.carriers) { carrier in
+                    ForEach(viewModel.filteredCarriers) { carrier in
                         CarrierCard(viewModel: carrier)
                             .listRowBackground(Color.clear)
-                            .background {
-                                NavigationLink("") {
-                                    CarrierInfoPageWrapper()
-                                }
-                            }
+                            .onTapGesture { viewModel.showCarrierInfoPage(carrier: carrier) }
                     }
                     Spacer().frame(height: CustomButton.Constant.height)
                 }
@@ -122,70 +210,58 @@ struct CarrierListPage: View {
                     CustomButton(
                         text: "Уточнить время",
                         hasDot: viewModel.hasFilter
-                    ) { filterIsShown = true }
+                    ) { viewModel.showFilters() }
                     .padding()
                 }
             }
         }
-        .fullScreenCover(isPresented: $filterIsShown) {
-            CarrierFilterPageWrapper()
-                .environment(\.colorScheme, colorScheme)
-        }
-        .task {
-            isLoading = true
-            do {
-                try await viewModel.updateCarriers()
-                isLoading = false
-            } catch {
-                dismiss()
-                guard
-                    let error = error as? ClientError,
-                    error.causeDescription == "Transport threw an error."
-                else {
-                    onError(.server)
-                    return
-                }
-                onError(.internet)
-
+        .fullScreenCover(isPresented: $viewModel.filterIsShown) {
+            CarrierFilterPageWrapper(isShown: $viewModel.filterIsShown) { filters in
+                viewModel.applyFilters(filters)
             }
+            .environment(\.colorScheme, colorScheme)
         }
+        .fullScreenCover(isPresented: $viewModel.isCarrierInfoPageShown) {
+            CarrierInfoPageWrapper(
+                code: viewModel.carrierCodeToShow,
+                onError: viewModel.dismissOnError
+            )
+        }
+        .task { await viewModel.update() }
     }
 }
 
 struct CarrierFilterPageWrapper: View {
-    @Environment(\.dismiss) private var dismiss
+    @Binding var isShown: Bool
+    let action: (CarrierFilterPageViewModel.Filters) -> Void
     var body: some View {
-        let viewModel: CarrierFilterPage.ViewModel = {
-            let viewModel = CarrierFilterPage.ViewModel()
-            viewModel.proceed = { dismiss() }
-            return viewModel
-        }()
+        let viewModel = CarrierFilterPageViewModel { filters in
+            action(filters)
+            isShown = false
+        }
         NavigationStack {
             CarrierFilterPage(viewModel: viewModel)
                 .customNavigationBar(title: "") {
-                    dismiss()
+                    isShown = false
                 }
         }
     }
 }
 
 struct CarrierInfoPageWrapper: View {
+    var code: Int?
+    var onError: (Error) -> Void
     @Environment(\.dismiss) private var dismiss
     var body: some View {
-        let viewModel: CarrierInfoPage.ViewModel = {
-            let viewModel = CarrierInfoPage.ViewModel.init(
-                logo: nil,
-                name: "ОАО «РЖД»",
-                email: "I.Lozgkina@yandex.ru",
-                phone: "+7 (904) 329-27-71"
+        NavigationStack {
+            CarrierInfoPage(
+                viewModel: CarrierInfoPageViewModel(code: code, onError: onError)
             )
-            return viewModel
-        }()
-        CarrierInfoPage(viewModel: viewModel)
             .customNavigationBar(
                 title: "Информация о перевозчике",
                 action: { dismiss() }
             )
+        }
     }
 }
 
@@ -194,28 +270,10 @@ struct CarrierInfoPageWrapper: View {
         CarrierListPage(
             viewModel: .init(
                 from: .init(id: "s9612140", name: "Ижевск"),
-                to: .init(id: "s2000003", name: "Москва (Казанский вокзал)")
+                to: .init(id: "s2000003", name: "Москва (Казанский вокзал)"),
+                dismiss: {},
+                onError: { print("error:", $0) }
             )
         )
-    }
-}
-
-var mockCarriers: [CarrierCard.ViewModel] {
-    makeIds(carriers: [
-        .rzd,
-        .fgk,
-        .ural,
-        .rzd,
-        .fgk,
-        .ural,
-        .rzd,
-        .fgk,
-        .ural,
-    ])
-}
-
-func makeIds(carriers: [CarrierCard.ViewModel]) -> [CarrierCard.ViewModel] {
-    carriers.enumerated().map { index, carrier in
-        carrier.with(id: "\(index)")
     }
 }

@@ -1,45 +1,52 @@
-import SwiftUI
 import Observation
+import SwiftUI
 
-struct CarrierFilterPage: View {
-    @Observable
-    final class ViewModel {
+@MainActor
+final class CarrierFilterPageViewModel: ObservableObject {
+    let action: (Filters) -> Void
+    init(action: @escaping (Filters) -> Void) {
+        self.action = action
+    }
+    struct Filters {
         var showMorning = false
         var showDay = false
         var showEvening = false
         var showNight = false
         var showWithTransfers: Bool? = nil
-        var showWithTransfersYes: Bool {
-            get { showWithTransfers == true }
-            set { showWithTransfers = newValue }
-        }
-        var showWithTransfersNo: Bool {
-            get { showWithTransfers == false }
-            set { showWithTransfers = !newValue }
-        }
-        var canProceed: Bool { showWithTransfers != nil }
-        var proceed: () -> Void = {}
     }
+    @Published var filters: Filters = .init()
+    var showWithTransfersYes: Bool {
+        get { filters.showWithTransfers == true }
+        set { filters.showWithTransfers = newValue }
+    }
+    var showWithTransfersNo: Bool {
+        get { filters.showWithTransfers == false }
+        set { filters.showWithTransfers = !newValue }
+    }
+    var canProceed: Bool { filters.showWithTransfers != nil }
+    func proceed() { action(filters) }
+}
 
-    @Bindable var viewModel: ViewModel
+struct CarrierFilterPage: View {
+    @ObservedObject var viewModel: CarrierFilterPageViewModel
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Время отправления").b24
             Boxed(
                 text: "Утро 06:00 - 12:00",
-                value: $viewModel.showMorning
+                value: $viewModel.filters.showMorning
             )
             Boxed(
                 text: "День 12:00 - 18:00",
-                value: $viewModel.showDay
+                value: $viewModel.filters.showDay
             )
             Boxed(
                 text: "Вечер 18:00 - 00:00",
-                value: $viewModel.showEvening
+                value: $viewModel.filters.showEvening
             )
             Boxed(
                 text: "Ночь 00:00 - 06:00",
-                value: $viewModel.showNight
+                value: $viewModel.filters.showNight
             )
             Text("Показывать варианты с пересадками").b24
                 .listRowSeparator(.hidden)
@@ -91,7 +98,7 @@ struct Line: View {
     var yesImage: UIImage
     var noImage: UIImage
     var body: some View {
-        HStack{
+        HStack {
             Text(text)
             Spacer()
             Image(uiImage: value ? yesImage : noImage)
@@ -105,9 +112,8 @@ struct Line: View {
 }
 
 #Preview {
-    let viewModel: CarrierFilterPage.ViewModel = {
-        let viewModel = CarrierFilterPage.ViewModel()
-        viewModel.proceed = { print("Поехали!") }
+    let viewModel: CarrierFilterPageViewModel = {
+        let viewModel = CarrierFilterPageViewModel { print("fitltes:", $0) }
         return viewModel
     }()
     NavigationStack {
@@ -116,4 +122,3 @@ struct Line: View {
             .navigationBarTitleDisplayMode(.inline)
     }
 }
-

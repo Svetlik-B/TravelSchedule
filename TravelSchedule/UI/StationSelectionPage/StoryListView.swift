@@ -19,7 +19,6 @@ final class Page: Identifiable {
     var isCompleted: Bool = false
 }
 
-@Observable
 final class Story: Identifiable {
     var id: String { imageName }
     init(
@@ -51,9 +50,9 @@ func createStories() -> [Story] {
     }
 }
 
-@Observable
-final class StoryListViewModel {
-    var storyPageViewModel: StoryPageViewModel? {
+@MainActor
+final class StoryListViewModel: ObservableObject {
+    @Published var storyPageViewModel: StoryPageViewModel? {
         willSet {
             guard let oldValue = storyPageViewModel, newValue == nil else { return }
             let completed = Set(oldValue.completedIds)
@@ -66,7 +65,7 @@ final class StoryListViewModel {
             }
         }
     }
-    var stories: [Story] = createStories()
+    @Published var stories: [Story] = createStories()
     var sortedStories: [Story] {
         stories.sorted { first, second in
             switch (first.isCompleted, second.isCompleted) {
@@ -98,7 +97,7 @@ final class StoryListViewModel {
 }
 
 struct StoryListView: View {
-    @Bindable var viewModel: StoryListViewModel
+    @ObservedObject var viewModel = StoryListViewModel()
     var body: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 12) {

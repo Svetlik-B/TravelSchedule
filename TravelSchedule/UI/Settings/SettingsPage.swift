@@ -1,7 +1,8 @@
 import SwiftUI
 
-@Observable
-final class SettingsPageViewModel {
+@MainActor
+final class SettingsPageViewModel: ObservableObject {
+    var onError: (Error) -> Void = { _ in }
     init(
         colorScheme: ColorScheme,
         showUserAgreement: Bool,
@@ -12,19 +13,19 @@ final class SettingsPageViewModel {
         self.showUserAgreement = showUserAgreement
         self.isDark = colorScheme == .dark
     }
-    var isDark: Bool {
+    @Published var isDark: Bool {
         didSet {
             colorScheme = isDark ? .dark : .light
             setColorScheme(colorScheme)
         }
     }
-    var colorScheme: ColorScheme
+    @Published var colorScheme: ColorScheme
+    @Published var showUserAgreement: Bool
     var setColorScheme: (ColorScheme) -> Void
-    var showUserAgreement: Bool
 }
 
 struct SettingsPage: View {
-    @Bindable var viewModel: SettingsPageViewModel
+    @ObservedObject var viewModel: SettingsPageViewModel
     @Environment(\.colorScheme) var colorScheme
     var body: some View {
         VStack {
@@ -51,7 +52,7 @@ struct SettingsPage: View {
         }
         .fullScreenCover(isPresented: $viewModel.showUserAgreement) {
             NavigationStack {
-                UserAgreementView()
+                UserAgreementView(onError: viewModel.onError)
                     .customNavigationBar(
                         title: "Пользовательское соглашение",
                         action: { viewModel.showUserAgreement = false }
@@ -67,6 +68,6 @@ struct SettingsPage: View {
         viewModel: .init(
             colorScheme: .dark,
             showUserAgreement: false
-        )
+        ) { print("error:", $0) }
     )
 }

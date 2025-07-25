@@ -1,17 +1,17 @@
 import SwiftUI
 
-@Observable
-final class CustomProgressBarViewModel {
+@MainActor
+final class CustomProgressBarViewModel: ObservableObject {
     init(value: Double = 0, isCompleted: Bool = false) {
         self.value = value
         self.isCompleted = isCompleted
     }
-    var value: Double
-    var isCompleted: Bool
+    @Published var value: Double
+    @Published var isCompleted: Bool
 }
 
 struct CustomProgressBar: View {
-    var viewModel: CustomProgressBarViewModel
+    @ObservedObject var viewModel: CustomProgressBarViewModel
     var body: some View {
         GeometryReader { geometry in
             if viewModel.isCompleted {

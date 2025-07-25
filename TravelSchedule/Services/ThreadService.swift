@@ -9,7 +9,7 @@ protocol ThreadServiceProtocol {
     ) async throws -> Thread
 }
 
-final class ThreadService: ThreadServiceProtocol {
+actor ThreadService: ThreadServiceProtocol {
     private let client: Client
     private let apikey: String
 
